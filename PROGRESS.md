@@ -1,170 +1,145 @@
 # formER — Development Progress Tracking
 
 ## Current Development Milestone
-**Milestone 4: Intelligent Field Matching Engine (Completed & Verified)**
+**Milestone 5: Chrome Extension Foundation & Form Extraction (Completed & Verified)**
 
 ---
 
-## 1. Milestone Status: Intelligent Field Matching Engine
+## 1. Milestone Status: Chrome Extension Foundation & Form Extraction
 
 ### Status: Complete & Verified
-The hybrid form-field understanding and matching engine has been implemented and verified. It maps extracted online form fields to canonical profile fields using a multi-stage pipeline: deterministic rule-based matching with negative guards, local sentence embedding inference via MiniLM (`@huggingface/transformers`), an independent validation and decision engine, and an authenticated REST API.
+The browser integration layer for formER has been established with a production-oriented Chrome Manifest V3 extension. The extension detects, inspects, and extracts structured form field metadata from live web pages with high semantic precision, strict privacy boundaries, and 100% schema compatibility with the backend `POST /api/v1/autofill/match` contract.
 
 ### Completed Features:
 
-#### Part 1 — Canonical Field Registry (`server/src/services/matching/fieldRegistry.js`):
-- Controlled vocabulary defining 44 canonical profile fields across Personal, Contact, Permanent Address, Correspondence Address, Education (10th, 12th, Undergraduate), and Professional categories.
-- Each registry entry specifies:
-  - Canonical dotted key (e.g., `personal.fullName`, `education.undergraduate.cgpa`, `addresses.permanent.postalCode`)
-  - Human-readable name & semantic description
-  - Data type (`string`, `number`, `date`, `url`)
-  - Curated aliases for synonym expansion
-  - Negative context constraints and section hints to guard against semantic confusion.
+#### Part 1 — Matching Contract Audit & Multi-Record Education Disambiguation
+- **Audit Findings**: Audited canonical education resolution against the existing profile schema. When users possess multiple qualification records at the same level (e.g. multiple undergraduate degrees), the system was previously resolving the first matching record arbitrarily.
+- **Narrowly Scoped Correction**: Updated `extractProfileValue` in `server/src/services/matching/validationEngine.js` to score educational records against field/section text (e.g., degree title, specialization, abbreviation). If unambiguous, it matches the intended record and preserves its stable `educationRecordId`. If the form question is ambiguous, it returns `needs_review` with a clear warning rather than making an arbitrary choice.
 
-#### Part 2 — Deterministic Matching (`server/src/services/matching/deterministicMatcher.js`):
-- High-confidence rule-based matching analyzing field labels, IDs, names, placeholders, input types, and section context.
-- Negative guards prevent false-positive matching:
-  - Applicant name vs. Father's name vs. Mother's name vs. Institution/School/College name.
-  - Permanent address vs. Correspondence/Mailing address.
-  - Class 10th percentage vs. Class 12th percentage vs. Undergraduate aggregate percentage vs. CGPA.
-  - URL profile links (LinkedIn, GitHub, Portfolio).
+#### Part 2 — Extension Architecture (`extension/`)
+- Built a modular Manifest V3 extension:
+  - `manifest.json`: Manifest V3 declaration with minimum permissions, action popup, background service worker, and branded icons.
+  - `content/domUtils.js`: Modular DOM traversal utilities for visibility checks, label discovery, section detection, and sensitive field filtering.
+  - `content/extractor.js`: Core extraction engine converting DOM elements into structured metadata objects.
+  - `content/content.js`: Injected content script listening for runtime messages and executing field extraction.
+  - `background/service-worker.js`: Service worker managing active tab lifecycle, script injection, and coordinating messaging.
+  - `popup/popup.html`, `popup.css`, `popup.js`: Functional formER popup interface.
 
-#### Part 3 — Local MiniLM Integration (`server/src/services/matching/semanticMatcher.js`):
-- Embedded local sentence-transformers inference using `@huggingface/transformers` (`Xenova/all-MiniLM-L6-v2`) in Node.js ES Modules without requiring Python or microservices.
-- Safe concurrent singleton initialization ensuring the ONNX model is loaded once into memory and reused across requests.
-- Canonical registry embeddings pre-computed and cached in-memory (384-dimensional normalized vectors).
-- High-performance batch inference (`rankCandidatesBatch`) for multi-field forms.
-- Normalized vector dot product calculates exact cosine similarity.
-- Fallback resilience: Model loading and inference errors are caught gracefully and routed to fallback/unmatched decisions without crashing the server.
+#### Part 3 — Browser Permissions & Security
+- **Minimum Permissions**: Uses only `activeTab` and `scripting`.
+- **No Unrestricted Access**: No `<all_urls>` or wildcard host permissions in `manifest.json`.
+- **No Background Tab Probing**: Content scripts are injected only on user demand into the active tab.
+- **Restricted Pages Protection**: Gracefully intercepts `chrome://`, `about:`, `edge:`, `chrome-extension://`, and `devtools:` pages, alerting the user without throwing errors.
 
-#### Part 4 — Independent Validation & Decision Engine (`server/src/services/matching/validationEngine.js`):
-- Decouples similarity scores from autofill eligibility. Never approves a mapping solely based on high cosine similarity.
-- Enforces 4 standard decision states:
-  - `matched`: Verified mapping with profile data present; autofill safe.
-  - `needs_review`: Flagged for user confirmation when:
-    - Profile field is empty or unset.
-    - Semantic match ambiguity exists (top candidates within 0.05 score delta).
-    - ML-only match without deterministic verification (flags review recommendation).
-    - Metric distinction (e.g., percentage requested but only CGPA present; refuses arbitrary percentage derivation).
-  - `unmatched`: No candidate meets confidence thresholds or violates negative guards.
-  - `unsupported`: Security challenges (CAPTCHA, OTP), file uploads (resumes, signatures), or password fields safely flagged as unsupportable.
-- Preserves qualification context: Educational fields return the associated subdocument `educationRecordId`.
+#### Part 4 — Form Field Extraction Engine
+- **Supported Controls**: Detects text inputs (text, email, tel, number, date, url), textareas, dropdowns (`<select>`), radio button groups, and checkboxes.
+- **Radio Button Grouping**: All radio inputs sharing a common `name` attribute or fieldset are unified into a single logical field, collecting all available options rather than treating each option as a disconnected question.
+- **Select Options**: Extracts `<select>` options, automatically filtering out empty placeholder entries (e.g. `"-- Select State --"` or `"Choose..."`).
+- **Multi-Strategy Label Discovery**:
+  1. `aria-labelledby` referencing other DOM element IDs.
+  2. `aria-label` attribute.
+  3. Explicit `<label for="...">`.
+  4. Enclosing/wrapping `<label>` (excluding child input contents).
+  5. Enclosing `<fieldset><legend>`.
+  6. Preceding sibling label or text block.
+  7. Table header cell (`<th>` or preceding `<td>`).
+  8. Placeholder / title / formatted name fallback.
+- **Section Detection**: Resolves surrounding context from nearest `<legend>`, `<section>` heading, or preceding `<h1>`-`<h6>` headings.
+- **Constraint Extraction**: Extracts `min`, `max`, `step`, `maxlength`, and `pattern` attributes.
 
-#### Part 5 — Matching Orchestration Service (`server/src/services/matching/matching.service.js`):
-- Cohesive multi-stage pipeline:
-  1. Unsupported field detection.
-  2. Deterministic rule evaluation.
-  3. Batch semantic embedding ranking for remaining ambiguous fields.
-  4. Independent validation, profile value extraction, and formatting.
-  5. Aggregates results and diagnostic summary metrics (`totalFields`, `matched`, `needsReview`, `unmatched`, `unsupported`).
+#### Part 5 — Sensitive Field Protection & Privacy Guarantees
+- **Strictly Excluded**: Passwords, file uploads (`type="file"`), credit cards / payment fields (`autocomplete="cc-*"`), OTP / 2FA verification passcodes (`autocomplete="one-time-code"`), CAPTCHAs, hidden CSRF tokens, honeypots, submit/reset buttons.
+- **Zero Value Collection**: User-entered values (`element.value`) are **never** read or collected.
+- **Zero Full HTML Transmission**: Only sanitized metadata strings (labels, names, options) are extracted.
 
-#### Part 6 — Authenticated REST API (`server/src/routes/autofill.routes.js`):
-- `POST /api/v1/autofill/match`:
-  - Protected with session authentication (`requireAuth`) and double-submit CSRF cookie protection.
-  - Validates request payload via Zod (`validateMatchRequest`) with batch bounds (1 to 100 fields).
-  - Automatically loads authenticated user's canonical profile.
-  - Returns structured array of match recommendations with diagnostic metadata.
+#### Part 6 — Popup Interface
+- Displays formER branding with active version badge.
+- Shows real-time page support status ("Supported" vs "Restricted").
+- "Detect Form Fields" action button with interactive loading spinner.
+- Stat counters: Number of supported fields detected vs. excluded/sensitive fields.
+- Interactive field list showing field labels, types, IDs, and options.
+- Diagnostic JSON view toggle displaying the backend-compatible payload.
+
+#### Part 7 — Messaging Architecture
+- Standard Chrome extension messaging pipeline:
+  - Popup sends `{ type: 'DETECT_FIELDS', tabId }` to `background/service-worker.js`.
+  - Service worker injects `content/content.js` into the active tab via `chrome.scripting.executeScript`.
+  - Content script executes `extractFormFields` and responds with sanitized metadata.
+  - Service worker delivers extraction payload to the popup.
 
 ---
 
 ## 2. Modified & Created Files
 
 ### Created Files:
-- `server/src/services/matching/fieldRegistry.js`: Canonical registry of 44 supported fields and semantic metadata.
-- `server/src/services/matching/deterministicMatcher.js`: Rule-based deterministic field matcher with negative guards.
-- `server/src/services/matching/semanticMatcher.js`: Local MiniLM inference service, embedding cache, and candidate ranking.
-- `server/src/services/matching/validationEngine.js`: Independent validation engine, value extraction, and decision logic.
-- `server/src/services/matching/matching.service.js`: Form-field matching pipeline orchestrator.
-- `server/src/validators/autofill.validator.js`: Zod schema and validation middleware for `/api/v1/autofill/match`.
-- `server/src/controllers/autofill.controller.js`: Controller handling matching requests.
-- `server/src/routes/autofill.routes.js`: Express router mounting `/api/v1/autofill/match`.
-- `server/tests/matching.test.js`: Comprehensive 12-scenario test suite verifying precision, MiniLM inference, negative guards, abstention, and REST API.
+- `extension/manifest.json`: Chrome Manifest V3 declaration.
+- `extension/package.json`: Extension module package descriptor.
+- `extension/icons/icon16.png`: 16x16 formER extension icon.
+- `extension/icons/icon48.png`: 48x48 formER extension icon.
+- `extension/icons/icon128.png`: 128x128 formER extension icon.
+- `extension/content/domUtils.js`: Modular DOM utilities for visibility, sensitive filtering, label discovery, and section resolution.
+- `extension/content/extractor.js`: Pure form field extraction logic.
+- `extension/content/content.js`: Browser content script injected into active tabs.
+- `extension/background/service-worker.js`: Background service worker managing tab lifecycle and messaging.
+- `extension/popup/popup.html`: Popup UI markup.
+- `extension/popup/popup.css`: Popup styling.
+- `extension/popup/popup.js`: Popup logic and diagnostic presentation.
+- `extension/test-form.html`: Real-world job application and academic registration test form.
+- `server/tests/extension.test.js`: 12 comprehensive unit and DOM extraction test scenarios.
+- `server/tests/chrome-extension.e2e.test.js`: 3 end-to-end tests executing inside an actual Google Chrome browser.
 
 ### Modified Files:
-- `server/src/routes/index.js`: Mounted `autofillRoutes` at `/api/v1/autofill`.
-- `server/src/middleware/csrf.middleware.js`: Fixed destructuring of `generateToken` from `csrf-csrf`.
-- `server/src/controllers/auth.controller.js`: Enabled overwrite mode in `getCsrfToken` to prevent session-identifier mismatch on CSRF re-fetch.
-- `server/package.json`: Added `tests/matching.test.js` to `npm test` script.
+- `server/src/services/matching/validationEngine.js`: Updated `extractProfileValue` to support multi-record qualification scoring and prevent arbitrary selection.
+- `server/tests/matching.test.js`: Added test `8b` verifying multi-record education resolution and ambiguity flagging.
+- `server/package.json`: Updated `npm test` script to chain all 8 test suites.
 
 ---
 
 ## 3. Verified Test Results
 
 Executed complete automated test suite (`npm test`):
-- **Total Test Suites**: 6
-- **Total Tests**: 44
-- **Passed**: 44
+- **Total Test Suites**: 8
+- **Total Tests**: 60
+- **Passed**: 60
 - **Failed**: 0
-- **Duration**: ~8.5s
+- **Overall Duration**: ~12s
 
-### Verified Scenarios:
-1. `health.test.js` (4 tests): Liveness, readiness, 404, Helmet security headers.
-2. `error.test.js` (3 tests): Error formatting, status codes, production message masking.
-3. `db.test.js` (2 tests): Connection success and unreachable host diagnostic reporting.
-4. `auth.test.js` (11 tests): Registration, Argon2id hashing, login, logout, session regeneration, CSRF, rate limiting.
-5. `profile.test.js` (12 tests): Profile retrieval, auto-initialization, partial updates, addresses, education CRUD, isolation, injection protection, optional field clearing.
-6. `matching.test.js` (12 tests):
-   - Canonical registry definitions, categories, and types.
-   - Deterministic matching for applicant name, father's name, mother's name, with strict exclusion of institutions.
-   - Permanent vs. correspondence address postal codes and cities.
-   - Disambiguation of 10th percentage, 12th percentage, graduation degree, and CGPA.
-   - Real local MiniLM inference embedding text and ranking semantic candidates.
-   - Validation engine producing `matched` status when data exists.
-   - Safe abstention: `needs_review` when profile value is missing.
-   - Safe abstention: refusing automatic CGPA-to-percentage conversion without verified formula.
-   - Unsupported field detection for file uploads, passwords, and security challenges.
-   - End-to-end pipeline orchestration with diagnostic summary.
-   - Unauthorized access rejection (HTTP 401) on `POST /api/v1/autofill/match`.
-   - Full authenticated autofill match integration with real database profile and education record ID preservation.
+### Test Suites Breakdown:
+1. `tests/health.test.js` (4 tests): Health liveness, readiness, 404, Helmet security headers.
+2. `tests/error.test.js` (3 tests): Error formatting, status codes, production message masking.
+3. `tests/db.test.js` (2 tests): Database connection success and unreachable host diagnostic reporting.
+4. `tests/auth.test.js` (11 tests): Registration, Argon2id hashing, login, logout, session regeneration, CSRF, rate limiting.
+5. `tests/profile.test.js` (12 tests): Profile retrieval, auto-initialization, partial updates, addresses, education CRUD, isolation, injection protection, optional field clearing.
+6. `tests/matching.test.js` (13 tests): Canonical registry, deterministic matching, address separation, education disambiguation, local MiniLM inference, validation engine, safe abstention, multi-record disambiguation, full REST API.
+7. `tests/extension.test.js` (12 tests):
+   - Standard labels with `for`/`id`.
+   - Nested wrapping labels.
+   - ARIA labels (`aria-label` and `aria-labelledby`).
+   - Placeholder-only inputs.
+   - Dropdown (`<select>`) option extraction.
+   - Radio button groups unified into a single logical field.
+   - Section context resolution from fieldsets and headings.
+   - Sensitive field exclusion (passwords, files, cards, OTP, CAPTCHA, tokens).
+   - Zero user value collection privacy guarantee.
+   - Dynamic form elements extraction.
+   - Empty and invalid page handling.
+   - Strict validation against backend `POST /api/v1/autofill/match` schema.
+8. `tests/chrome-extension.e2e.test.js` (3 tests):
+   - Unpacked extension loads in real Google Chrome browser (`--load-extension`) without manifest errors.
+   - Real Chrome navigates to formER test page and executes content extraction script via Chrome DevTools Protocol.
+   - Real extraction on 26-control form matches backend contract (16 supported fields, 8 excluded sensitive controls).
 
 ---
 
 ## 4. Known Issues & Limitations
-- **External AI Fallback (Gemini)**: Not yet implemented (planned for Stage 3 LLM reasoning fallback when confidence is ambiguous).
-- **Chrome Extension & Frontend Client**: Not yet implemented.
-- **Dynamic Field Types**: Dropdowns (`<select>`) and radio buttons currently match value options to canonical values via string equality; fuzzy option mapping will be enhanced with client-side extension feedback.
+- **Autofill DOM Writing**: Intentionally deferred to Milestone 6/7 after user confirmation UI and authorization flows are implemented.
+- **Extension Authentication**: Extension currently operates in standalone extraction/diagnostic mode; session cookie authorization with the backend API will be linked in upcoming milestones.
+- **Cross-Origin iFrames**: Fields nested inside cross-origin `<iframe>` elements (such as Stripe Elements or reCAPTCHA frames) are inaccessible to content scripts by design and are safely ignored.
 
 ---
 
 ## 5. Next Recommended Implementation Step
-**Milestone 5: Chrome Extension (Manifest V3) or Gemini LLM Reasoning Fallback**
-- Implement Chrome Extension form field detection, context extraction, authenticated backend communication, and user review UI.
-- Or implement Stage 3 Gemini Reasoning fallback for ambiguous fields before browser automation.
-
----
-
-## 4. Canonical Field Mappings for AI/ML Readiness
-
-The schema was constructed with predictable keys directly matching future MiniLM matching targets:
-- `personal.fullName`
-- `personal.dateOfBirth`
-- `personal.gender`
-- `personal.fatherName`
-- `personal.motherName`
-- `contact.primaryPhone`
-- `contact.alternatePhone`
-- `contact.contactEmail`
-- `addresses.permanent.addressLine1`
-- `addresses.permanent.city`
-- `addresses.permanent.state`
-- `addresses.permanent.postalCode`
-- `addresses.correspondence.addressLine1`
-- `addresses.correspondence.city`
-- `addresses.correspondence.state`
-- `addresses.correspondence.postalCode`
-- `education[id].qualificationLevel`
-- `education[id].degreeName`
-- `education[id].institution`
-- `education[id].boardOrUniversity`
-- `education[id].percentage`
-- `education[id].cgpa`
-- `education[id].passingYear`
-
----
-
-## 5. Next Recommended Implementation Step
-- **Milestone 4: React Application & Account Workflows**
-  - Initialize React + Vite frontend inside `client/` using Tailwind CSS.
-  - Build authentication UI (Registration, Login, Protected route guard).
-  - Build Profile Management Dashboard (Personal, Contact, Address, and Education editors).
-  - Integrate CSRF token fetching and session-authenticated API communication.
+**Milestone 6: Extension Authentication & Autofill Suggestions Bridge**
+- Implement secure session sharing or token-based authentication between the Chrome Extension and the Express backend.
+- Bridge the extracted fields directly to `POST /api/v1/autofill/match`.
+- Display suggestions with confidence scores and review recommendations in the extension popup before allowing the user to approve and autofill.

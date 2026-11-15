@@ -3,7 +3,7 @@ import { getFieldByKey } from './fieldRegistry.js';
 /**
  * Extract value from user profile using canonical key and qualification context
  */
-export const extractProfileValue = (profile, canonicalKey) => {
+export const extractProfileValue = (profile, canonicalKey, field = {}) => {
   if (!profile || !canonicalKey) {
     return { value: null, recordId: null };
   }
@@ -53,8 +53,8 @@ export const extractProfileValue = (profile, canonicalKey) => {
       return false;
     };
 
-    const targetEdu = profile.education.find((e) => matchLevel(e.qualificationLevel));
-    if (!targetEdu) {
+    const matchingEdus = profile.education.filter((e) => matchLevel(e.qualificationLevel));
+    if (matchingEdus.length === 0) {
       return {
         value: null,
         recordId: null,
@@ -62,12 +62,65 @@ export const extractProfileValue = (profile, canonicalKey) => {
       };
     }
 
+    if (matchingEdus.length === 1) {
+      const targetEdu = matchingEdus[0];
+      const val = targetEdu[fieldName];
+      const recId = targetEdu.id || targetEdu._id?.toString() || null;
+      return {
+        value: val !== undefined && val !== null ? val : null,
+        recordId: recId
+      };
+    }
+
+    // Multiple qualifying records at the same level (e.g. two undergraduate degrees)
+    // Score each record based on degree name, specialization, and institution mentions in field context
+    const cleanFieldText = ` ${field.section || ''} ${field.label || ''} ${field.name || ''} ${field.placeholder || ''} `
+      .toLowerCase()
+      .replace(/[^\w\s]/g, ' ')
+      .replace(/\s+/g, ' ');
+
+    const scored = matchingEdus
+      .map((edu) => {
+        let score = 0;
+        const deg = (edu.degreeName || '').toLowerCase().replace(/[^\w\s]/g, ' ').trim();
+        const spec = (edu.specialization || '').toLowerCase().replace(/[^\w\s]/g, ' ').trim();
+        const inst = (edu.institution || '').toLowerCase().replace(/[^\w\s]/g, ' ').trim();
+
+        // Exact phrase matches
+        if (spec && cleanFieldText.includes(` ${spec} `)) score += 10;
+        if (deg && cleanFieldText.includes(` ${deg} `)) score += 10;
+
+        // Degree abbreviation hints
+        if (deg.includes('technology') && (cleanFieldText.includes(' btech ') || cleanFieldText.includes(' b tech '))) score += 5;
+        if (deg.includes('science') && (cleanFieldText.includes(' bsc ') || cleanFieldText.includes(' b sc '))) score += 5;
+        if (deg.includes('computer') && cleanFieldText.includes(' computer ')) score += 4;
+        if (deg.includes('mathematics') && cleanFieldText.includes(' math ')) score += 4;
+        if (spec && cleanFieldText.includes(spec)) score += 3;
+        if (inst && cleanFieldText.includes(` ${inst} `)) score += 5;
+
+        return { edu, score };
+      })
+      .sort((a, b) => b.score - a.score);
+
+    if (scored[0].score > 0 && (scored.length === 1 || scored[0].score > scored[1].score)) {
+      const targetEdu = scored[0].edu;
+      const val = targetEdu[fieldName];
+      const recId = targetEdu.id || targetEdu._id?.toString() || null;
+      return {
+        value: val !== undefined && val !== null ? val : null,
+        recordId: recId
+      };
+    }
+
+    // Still ambiguous: do NOT arbitrarily pick one without flagging review
+    const targetEdu = matchingEdus[0];
     const val = targetEdu[fieldName];
     const recId = targetEdu.id || targetEdu._id?.toString() || null;
-
     return {
       value: val !== undefined && val !== null ? val : null,
-      recordId: recId
+      recordId: recId,
+      isAmbiguousRecord: true,
+      warning: `Multiple qualification records found for "${levelKey}". Review recommended to confirm degree selection.`
     };
   }
 
@@ -283,7 +336,7 @@ export const validateCandidate = (field, candidate, profile, allCandidates = [])
   }
 
   // 5. Extract value from user profile
-  const { value: rawVal, recordId: educationRecordId, warning } = extractProfileValue(profile, candidate.canonicalKey);
+  const { value: rawVal, recordId: educationRecordId, warning, isAmbiguousRecord } = extractProfileValue(profile, candidate.canonicalKey, field);
 
   // 6. Check Ambiguity (if multiple ML candidates have very close scores)
   let isAmbiguous = false;
@@ -315,6 +368,21 @@ export const validateCandidate = (field, candidate, profile, allCandidates = [])
       confidence: Math.round(baseConfidence * 100) / 100,
       method: candidate.method,
       reason: ambiguityReason,
+      needsReview: true
+    };
+  }
+
+  // Case A2: Ambiguous multiple education records at same level
+  if (isAmbiguousRecord) {
+    return {
+      fieldId,
+      canonicalKey: candidate.canonicalKey,
+      value: formattedValue,
+      educationRecordId: educationRecordId || undefined,
+      status: 'needs_review',
+      confidence: Math.round(baseConfidence * 100) / 100,
+      method: candidate.method,
+      reason: warning,
       needsReview: true
     };
   }

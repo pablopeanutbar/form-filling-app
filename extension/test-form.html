@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>formER Real-World Test Form</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .form-section { margin-bottom: 24px; border: 1px solid #ccc; padding: 16px; border-radius: 8px; }
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-weight: bold; margin-bottom: 4px; }
+    input[type="text"], input[type="email"], input[type="tel"], input[type="number"], input[type="date"], input[type="url"], select, textarea {
+      width: 300px; padding: 8px; border: 1px solid #aaa; border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Job Application & Academic Registration Form</h1>
+
+  <form id="applicationForm">
+    <!-- Section 1: Personal Details -->
+    <div class="form-section">
+      <h2>Personal Details</h2>
+
+      <div class="form-group">
+        <label for="applicant_name">Full Legal Name</label>
+        <input type="text" id="applicant_name" name="fullName" placeholder="John Doe" required />
+      </div>
+
+      <div class="form-group">
+        <label for="applicant_dob">Date of Birth</label>
+        <input type="date" id="applicant_dob" name="dob" required />
+      </div>
+
+      <fieldset class="form-group">
+        <legend>Gender</legend>
+        <label><input type="radio" name="gender" value="male" /> Male</label>
+        <label><input type="radio" name="gender" value="female" /> Female</label>
+        <label><input type="radio" name="gender" value="other" /> Other</label>
+      </fieldset>
+
+      <div class="form-group">
+        <label for="father_name">Father's Full Name</label>
+        <input type="text" id="father_name" name="fatherName" />
+      </div>
+    </div>
+
+    <!-- Section 2: Contact Information -->
+    <div class="form-section">
+      <h2>Contact Information</h2>
+
+      <div class="form-group">
+        <label for="contact_email">Email Address</label>
+        <input type="email" id="contact_email" name="email" placeholder="example@domain.com" required />
+      </div>
+
+      <div class="form-group">
+        <label for="contact_phone">Primary Mobile Phone</label>
+        <input type="tel" id="contact_phone" name="primaryPhone" placeholder="+1-555-0199" />
+      </div>
+    </div>
+
+    <!-- Section 3: Permanent Address -->
+    <div class="form-section">
+      <h2>Permanent Address</h2>
+
+      <div class="form-group">
+        <label for="perm_addr1">Street Address Line 1</label>
+        <input type="text" id="perm_addr1" name="permAddressLine1" />
+      </div>
+
+      <div class="form-group">
+        <label for="perm_city">City</label>
+        <input type="text" id="perm_city" name="permCity" />
+      </div>
+
+      <div class="form-group">
+        <label for="perm_pin">Postal / ZIP Code</label>
+        <input type="text" id="perm_pin" name="permPostalCode" maxlength="10" />
+      </div>
+    </div>
+
+    <!-- Section 4: Educational Qualifications -->
+    <div class="form-section">
+      <h2>Educational Qualifications</h2>
+
+      <div class="form-group">
+        <label for="tenth_pct">Class 10th Aggregate Percentage (%)</label>
+        <input type="number" id="tenth_pct" name="class10Percentage" min="0" max="100" step="0.01" />
+      </div>
+
+      <div class="form-group">
+        <label for="twelfth_pct">Class 12th / Intermediate Percentage (%)</label>
+        <input type="number" id="twelfth_pct" name="class12Percentage" min="0" max="100" step="0.01" />
+      </div>
+
+      <div class="form-group">
+        <label for="ug_degree">Undergraduate Degree Title</label>
+        <input type="text" id="ug_degree" name="ugDegreeName" placeholder="e.g. Bachelor of Technology" />
+      </div>
+
+      <div class="form-group">
+        <label for="ug_cgpa">Graduation CGPA (Cumulative Grade Point Average)</label>
+        <input type="number" id="ug_cgpa" name="ugCgpa" min="0" max="10" step="0.01" />
+      </div>
+    </div>
+
+    <!-- Section 5: Professional Profiles -->
+    <div class="form-section">
+      <h2>Professional Links</h2>
+
+      <div class="form-group">
+        <label for="linkedin_url">LinkedIn Profile URL</label>
+        <input type="url" id="linkedin_url" name="linkedinUrl" placeholder="https://linkedin.com/in/username" />
+      </div>
+
+      <div class="form-group">
+        <label for="github_url">GitHub Profile URL</label>
+        <input type="url" id="github_url" name="githubUrl" placeholder="https://github.com/username" />
+      </div>
+
+      <div class="form-group">
+        <label for="experience_level">Total Years of Experience</label>
+        <select id="experience_level" name="yearsExperience">
+          <option value="">-- Select Experience --</option>
+          <option value="0-1">0 to 1 Year (Entry Level)</option>
+          <option value="1-3">1 to 3 Years (Junior)</option>
+          <option value="3-5">3 to 5 Years (Mid Level)</option>
+          <option value="5+">5+ Years (Senior)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Section 6: Sensitive Fields to Exclude -->
+    <div class="form-section" style="background: #fff0f0;">
+      <h2>Security & Verification (Must be Excluded by formER)</h2>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label for="account_password">Account Password</label>
+        <input type="password" id="account_password" name="password" />
+      </div>
+
+      <!-- File upload -->
+      <div class="form-group">
+        <label for="resume_file">Upload Resume (PDF)</label>
+        <input type="file" id="resume_file" name="resume" />
+      </div>
+
+      <!-- Credit card -->
+      <div class="form-group">
+        <label for="card_num">Application Fee Card Number</label>
+        <input type="text" id="card_num" autocomplete="cc-number" placeholder="4000 1234 5678 9010" />
+      </div>
+
+      <div class="form-group">
+        <label for="card_cvv">CVV</label>
+        <input type="text" id="card_cvv" placeholder="123" />
+      </div>
+
+      <!-- OTP / 2FA -->
+      <div class="form-group">
+        <label for="otp_code">SMS Verification Code</label>
+        <input type="text" id="otp_code" autocomplete="one-time-code" placeholder="6-digit OTP" />
+      </div>
+
+      <!-- CAPTCHA -->
+      <div class="form-group">
+        <label for="captcha_input">Enter Security Code Shown Below</label>
+        <input type="text" id="captcha_input" class="captcha-box" />
+      </div>
+
+      <!-- Hidden Token -->
+      <input type="hidden" name="csrf_token" value="sec_token_98765" />
+
+      <!-- Submit button -->
+      <input type="submit" value="Submit Application" />
+    </div>
+  </form>
+</body>
+</html>

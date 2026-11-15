@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>formER</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-container">
+    <!-- Header -->
+    <header class="popup-header">
+      <div class="brand">
+        <div class="brand-logo">f</div>
+        <div class="brand-info">
+          <h1>formER</h1>
+          <span class="version">v0.1.0</span>
+        </div>
+      </div>
+      <div id="pageStatusBadge" class="status-badge checking">Checking...</div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="popup-main">
+      <div class="page-meta">
+        <div class="meta-label">Active Page:</div>
+        <div id="pageTitle" class="meta-value truncate">Loading active tab...</div>
+      </div>
+
+      <!-- Action -->
+      <button id="detectBtn" class="btn-primary" type="button">
+        <span id="btnText">Detect Form Fields</span>
+        <span id="btnSpinner" class="spinner hidden"></span>
+      </button>
+
+      <!-- Error State -->
+      <div id="errorContainer" class="alert alert-error hidden">
+        <div class="alert-title">Unable to Extract</div>
+        <div id="errorMessage" class="alert-message"></div>
+      </div>
+
+      <!-- Results Stats -->
+      <div id="resultsContainer" class="results-card hidden">
+        <div class="stats-row">
+          <div class="stat-box">
+            <span class="stat-number stat-supported" id="supportedCount">0</span>
+            <span class="stat-label">Supported Fields</span>
+          </div>
+          <div class="stat-box">
+            <span class="stat-number stat-excluded" id="excludedCount">0</span>
+            <span class="stat-label">Excluded / Sensitive</span>
+          </div>
+        </div>
+
+        <!-- Field List Preview -->
+        <div class="fields-section">
+          <div class="fields-header">
+            <span>Detected Fields</span>
+            <button id="toggleJsonBtn" class="btn-text" type="button">Show JSON</button>
+          </div>
+          <div id="fieldsList" class="fields-list"></div>
+          <div id="jsonViewer" class="json-viewer hidden">
+            <pre><code id="jsonCode"></code></pre>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="popup-footer">
+      <span>AI/ML Form Understanding</span>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

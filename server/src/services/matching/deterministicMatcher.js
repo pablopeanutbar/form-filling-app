@@ -341,7 +341,7 @@ export const matchFieldDeterministically = (field) => {
 
   // Class 10 Matches
   if (is10th) {
-    if (hasAny(combined, ['percentage', 'percent', 'marks percentage']) && notContains(['cgpa', 'gpa'])) {
+    if ((hasAny(combined, ['percentage', 'percent', 'marks percentage', 'marks', 'pct', 'score']) || (field.label && field.label.includes('%'))) && notContains(['cgpa', 'gpa', 'total marks', 'max marks', 'maximum marks'])) {
       return {
         matched: true,
         canonicalKey: 'education.10th.percentage',
@@ -381,7 +381,7 @@ export const matchFieldDeterministically = (field) => {
 
   // Class 12 Matches
   if (is12th) {
-    if (hasAny(combined, ['percentage', 'percent', 'marks percentage']) && notContains(['cgpa', 'gpa'])) {
+    if ((hasAny(combined, ['percentage', 'percent', 'marks percentage', 'marks', 'pct', 'score']) || (field.label && field.label.includes('%'))) && notContains(['cgpa', 'gpa', 'total marks', 'max marks', 'maximum marks'])) {
       return {
         matched: true,
         canonicalKey: 'education.12th.percentage',
@@ -441,7 +441,7 @@ export const matchFieldDeterministically = (field) => {
       };
     }
 
-    if (hasAny(combined, ['percentage', 'percent', 'aggregate percentage']) && notContains(['cgpa', 'gpa'])) {
+    if ((hasAny(combined, ['percentage', 'percent', 'aggregate percentage', 'marks', 'pct']) || (field.label && field.label.includes('%'))) && notContains(['cgpa', 'gpa', 'total marks', 'max marks', 'maximum marks'])) {
       return {
         matched: true,
         canonicalKey: 'education.undergraduate.percentage',
@@ -451,7 +451,7 @@ export const matchFieldDeterministically = (field) => {
       };
     }
 
-    if (hasAny(combined, ['degree name', 'graduation degree', 'bachelor degree', 'degree in', 'qualifying degree'])) {
+    if (hasAny(combined, ['degree name', 'graduation degree', 'bachelor degree', 'degree in', 'qualifying degree', 'degree', 'course of study', 'degree course', 'course name', 'name of degree'])) {
       return {
         matched: true,
         canonicalKey: 'education.undergraduate.degreeName',

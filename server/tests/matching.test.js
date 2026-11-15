@@ -407,6 +407,57 @@ describe('Milestone 4: Intelligent Field Matching Engine Tests', () => {
     assert.equal(decision.needsReview, true);
   });
 
+  test('8b. Multi-record education resolution: flags needs_review if ambiguous, resolves if degree context provided', () => {
+    // Multi-record profile: two undergraduate degrees
+    const multiEduProfile = {
+      education: [
+        {
+          id: 'edu_ug_bsc',
+          qualificationLevel: 'undergraduate',
+          degreeName: 'Bachelor of Science in Mathematics',
+          institution: 'State College',
+          percentage: 82.0
+        },
+        {
+          id: 'edu_ug_btech',
+          qualificationLevel: 'undergraduate',
+          degreeName: 'Bachelor of Technology in Computer Science',
+          institution: 'Tech Institute',
+          percentage: 89.5
+        }
+      ]
+    };
+
+    const genericField = {
+      fieldId: 'f_ug_pct_generic',
+      label: 'Graduation Percentage',
+      name: 'grad_percentage'
+    };
+    const candidate = {
+      matched: true,
+      canonicalKey: 'education.undergraduate.percentage',
+      confidence: 1.0,
+      method: 'deterministic_rule'
+    };
+
+    // Ambiguous case: neither degree specified in form -> needs_review, not arbitrary pick
+    const ambigDecision = validateCandidate(genericField, candidate, multiEduProfile);
+    assert.equal(ambigDecision.status, 'needs_review');
+    assert.equal(ambigDecision.needsReview, true);
+    assert.ok(ambigDecision.reason.includes('Multiple qualification records'));
+
+    // Contextual case: form specifies "B.Tech" or "Computer Science"
+    const contextField = {
+      fieldId: 'f_ug_btech_pct',
+      label: 'B.Tech / Computer Science Percentage',
+      name: 'btech_percentage'
+    };
+    const resolvedDecision = validateCandidate(contextField, candidate, multiEduProfile);
+    assert.equal(resolvedDecision.status, 'matched');
+    assert.equal(resolvedDecision.value, 89.5);
+    assert.equal(resolvedDecision.educationRecordId, 'edu_ug_btech');
+  });
+
   test('9. Unsupported field detection flags file uploads, passwords, and security challenges', () => {
     const fileField = { fieldId: 'f_resume', label: 'Upload Resume PDF', type: 'file' };
     const check1 = isUnsupportedField(fileField);
