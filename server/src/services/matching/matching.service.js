@@ -2,6 +2,7 @@ import { matchFieldDeterministically } from './deterministicMatcher.js';
 import { rankCandidatesBatch } from './semanticMatcher.js';
 import { validateCandidate, isUnsupportedField } from './validationEngine.js';
 import { getFieldByKey } from './fieldRegistry.js';
+import { matchingDiagnostic } from './diagnostics.js';
 
 /**
  * Orchestrate the complete form field matching pipeline
@@ -25,6 +26,7 @@ export const matchFormFields = async (fields, profile) => {
   }
 
   const decisions = new Array(fields.length);
+  const selectedCandidates = new Array(fields.length);
   const fieldsForSemantic = [];
   const semanticIndexMap = [];
 
@@ -44,6 +46,7 @@ export const matchFormFields = async (fields, profile) => {
     // 2. Deterministic matching
     const detMatch = matchFieldDeterministically(normalizedField);
     if (detMatch && detMatch.matched) {
+      selectedCandidates[i] = detMatch;
       decisions[i] = validateCandidate(normalizedField, detMatch, profile);
       continue;
     }
@@ -68,8 +71,13 @@ export const matchFormFields = async (fields, profile) => {
       const candidates = semanticRankings.get(field.fieldId) || [];
 
       const topCandidate = candidates.length > 0 ? candidates[0] : null;
+      selectedCandidates[originalIdx] = topCandidate;
       decisions[originalIdx] = validateCandidate(field, topCandidate, profile, candidates);
     }
+  }
+
+  if (process.env.NODE_ENV === 'development' && process.env.MATCHING_DIAGNOSTICS === 'true') {
+    decisions.forEach((decision, index) => console.debug('[matching]', matchingDiagnostic(fields[index], decision, profile, selectedCandidates[index])));
   }
 
   // Calculate summary counts

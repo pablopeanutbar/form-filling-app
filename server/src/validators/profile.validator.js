@@ -23,6 +23,9 @@ const nullableString = (maxLen) =>
 
 export const personalSchema = z
   .object({
+    firstName: nullableString(120),
+    middleName: nullableString(120),
+    lastName: nullableString(120),
     fullName: nullableString(120),
     dateOfBirth: nullableString(30),
     gender: z.enum(['male', 'female', 'other', 'prefer_not_to_say']).nullable().optional(),

@@ -90,6 +90,9 @@ const profileSchema = new mongoose.Schema(
       index: true
     },
     personal: {
+      firstName: { type: String, trim: true, default: null },
+      middleName: { type: String, trim: true, default: null },
+      lastName: { type: String, trim: true, default: null },
       fullName: { type: String, trim: true, default: null },
       dateOfBirth: { type: String, trim: true, default: null },
       gender: {

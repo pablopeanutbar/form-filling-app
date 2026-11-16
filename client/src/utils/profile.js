@@ -1,6 +1,9 @@
 // Only editable API fields are serialized; record IDs and timestamps stay out of PATCH bodies.
 const field = (name, label, maxLength, extra = {}) => ({ name, label, maxLength, ...extra });
 export const personalFields = [
+  field('firstName', 'First / given name', 120, { autoComplete: 'given-name' }),
+  field('middleName', 'Middle name', 120, { autoComplete: 'additional-name' }),
+  field('lastName', 'Last / family name', 120, { autoComplete: 'family-name' }),
   field('fullName', 'Full legal name', 120, { autoComplete: 'name', wide: true, hint: 'Use the name shown on your official documents.' }),
   field('dateOfBirth', 'Date of birth', 30, { type: 'date', autoComplete: 'bday' }),
   field('gender', 'Gender', null, { options: [['male', 'Male'], ['female', 'Female'], ['other', 'Other'], ['prefer_not_to_say', 'Prefer not to say']] }),

@@ -1,3 +1,4 @@
+import { identifyField } from './fieldIdentity.js';
 import { getFieldByKey } from './fieldRegistry.js';
 import { validateDestination } from './destinationValidation.js';
 
@@ -14,7 +15,15 @@ export const extractProfileValue = (profile, canonicalKey, field = {}) => {
 
   // 1. Personal Information
   if (category === 'personal') {
-    const val = profile.personal?.[sub];
+    let val = profile.personal?.[sub];
+    if (sub === 'middleInitial' && profile.personal?.middleName?.trim()) {
+      const middle = profile.personal.middleName.trim();
+      // Multiple middle names need an explicit choice of initials.
+      val = /^\p{L}[\p{L}\p{M}]*$/u.test(middle) ? Array.from(middle)[0] : null;
+    }
+    if (sub === 'fullName' && !val?.trim() && profile.personal?.firstName?.trim() && profile.personal?.lastName?.trim()) {
+      val = [profile.personal.firstName, profile.personal.middleName, profile.personal.lastName].filter((part) => part?.trim()).map((part) => part.trim()).join(' ');
+    }
     return { value: val !== undefined && val !== null ? val : null, recordId: null };
   }
 
@@ -26,6 +35,11 @@ export const extractProfileValue = (profile, canonicalKey, field = {}) => {
 
   // 3. Addresses
   if (category === 'addresses') {
+    if (sub === 'unspecified') {
+      const values = ['permanent', 'correspondence'].map((kind) => profile.addresses?.[kind]?.[prop]).filter((v) => typeof v === 'string' && v.trim());
+      const unique = [...new Set(values.map((v) => v.trim()))];
+      return { value: unique.length === 1 ? unique[0] : null, recordId: null, warning: unique.length > 1 ? 'Permanent and correspondence addresses differ; choose the intended address.' : undefined };
+    }
     const val = profile.addresses?.[sub]?.[prop];
     return { value: val !== undefined && val !== null ? val : null, recordId: null };
   }
@@ -222,6 +236,8 @@ export const isUnsupportedField = (field) => {
  * Negative constraint check to prevent obvious semantic mismatches
  */
 export const violatesNegativeGuards = (field, candidateKey) => {
+  const identity = identifyField(field);
+  if (identity?.blocked || (identity?.key && identity.key !== candidateKey)) return true;
   const label = (field.label || '').toLowerCase();
   const section = (field.section || '').toLowerCase();
   const combined = `${field.section || ''} ${field.label || ''} ${field.name || ''} ${field.id || ''} ${field.placeholder || ''}`.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase().replace(/[_-]/g, ' ');
@@ -316,7 +332,7 @@ export const validateCandidate = (field, candidate, profile, allCandidates = [])
       status: 'unmatched',
       confidence: 0,
       method: null,
-      reason: 'No matching profile field found meeting confidence threshold',
+      reason: candidate?.reason || 'No matching profile field found meeting confidence threshold',
       needsReview: false
     };
   }

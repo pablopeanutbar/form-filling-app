@@ -1,3 +1,4 @@
+import { identifyField, normalizeIdentityText } from './fieldIdentity.js';
 import { CANONICAL_FIELDS } from './fieldRegistry.js';
 
 /**
@@ -35,9 +36,11 @@ const hasAny = (text, terms) => {
  * @returns {Object|null} Match result or null
  */
 export const matchFieldDeterministically = (field) => {
-  const label = clean(field.label);
-  const name = clean(field.name);
-  const id = clean(field.id);
+  const identity = identifyField(field);
+  if (identity) return { matched: true, canonicalKey: identity.key || null, confidence: 1, method: 'deterministic_identity', reason: identity.reason || 'Explicit field identity.', blocked: identity.blocked };
+  const label = clean(normalizeIdentityText(field.label));
+  const name = clean(normalizeIdentityText(field.name));
+  const id = clean(normalizeIdentityText(field.id));
   const placeholder = clean(field.placeholder);
   const section = clean(field.section);
   const type = (field.type || 'text').toLowerCase();

@@ -8,6 +8,11 @@ const __dirname = path.dirname(__filename);
 const serverEnvPath = path.resolve(__dirname, '../../.env');
 dotenv.config({ path: serverEnvPath });
 
+const extensionIdList = z.string().default('').refine(
+  (value) => value.split(',').map((id) => id.trim()).filter(Boolean).every((id) => /^[a-p]{32}$/.test(id)),
+  'Must contain comma-separated Chrome extension IDs (32 lowercase letters a-p)'
+);
+
 const envSchema = z.object({
   PORT: z.coerce.number().default(5000),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -18,7 +23,8 @@ const envSchema = z.object({
     .default('dev_session_secret_former_platform_secure_random_key_32_chars'),
   SESSION_MAX_AGE_MS: z.coerce.number().default(604800000), // 7 days in ms
   ALLOWED_ORIGINS: z.string().default('http://localhost:5173'),
-  EXTENSION_IDS: z.string().default('').refine((value) => value.split(',').map((id) => id.trim()).filter(Boolean).every((id) => /^[a-p]{32}$/.test(id)), 'EXTENSION_IDS must contain Chrome extension IDs')
+  EXTENSION_IDS: extensionIdList,
+  EXTENSION_DEV_IDS: extensionIdList
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -30,7 +36,9 @@ if (!parsed.success) {
 }
 
 export const env = parsed.data;
-export const extensionIds = env.EXTENSION_IDS.split(',').map((id) => id.trim()).filter(Boolean);
+// Admission configuration only, never authentication. Never merge development IDs into production.
+const activeExtensionIds = env.NODE_ENV === 'production' ? env.EXTENSION_IDS : env.EXTENSION_DEV_IDS;
+export const extensionIds = activeExtensionIds.split(',').map((id) => id.trim()).filter(Boolean);
 
 export const allowedOrigins = env.ALLOWED_ORIGINS
   .split(',')

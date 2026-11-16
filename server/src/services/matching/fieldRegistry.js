@@ -5,6 +5,9 @@
  */
 
 export const CANONICAL_FIELDS = [
+  ...['firstName', 'middleName', 'middleInitial', 'lastName'].map((key) => ({ key: 'personal.' + key, label: key.replace(/([A-Z])/g, ' $1'), category: 'personal', dataType: 'string', description: 'Applicant ' + key + ', not a full name or parent name', aliases: [] })),
+  ...['permanent', 'correspondence', 'unspecified'].flatMap((kind) => ['addressLine1', 'addressLine2', 'city', 'district', 'state', 'country', 'postalCode'].filter((prop) => kind === 'unspecified' || prop === 'addressLine2').map((prop) => ({ key: 'addresses.' + kind + '.' + prop, label: kind + ' ' + prop, category: 'addresses', dataType: 'string', description: kind + ' address ' + prop, aliases: [] }))),
+  ...['10th', '12th', 'undergraduate'].flatMap((level) => (level === 'undergraduate' ? ['sgpa'] : ['cgpa', 'cgpaScale', 'sgpa']).map((prop) => ({ key: 'education.' + level + '.' + prop, label: level + ' ' + prop, category: 'education', dataType: 'number', description: level + ' ' + prop + ', not percentage or marks', aliases: [] }))),
   ...['10th', '12th', 'undergraduate'].flatMap((level) => [
     { key: `education.${level}.marksObtained`, label: `${level === 'undergraduate' ? 'Undergraduate' : `Class ${level.slice(0, -2)}`} marks obtained`, category: 'education', dataType: 'number', description: `Actual marks obtained in ${level}, not a percentage or grade`, aliases: [] },
     { key: `education.${level}.maxMarks`, label: `${level} maximum marks`, category: 'education', dataType: 'number', description: `Maximum possible marks for ${level}, not obtained marks or a percentage`, aliases: [] }
