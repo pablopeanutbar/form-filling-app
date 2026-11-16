@@ -37,7 +37,9 @@
 .workspace-topbar { height:66px; padding:0 48px; border-bottom:1px solid #e9eaee; display:flex; align-items:center; justify-content:space-between; gap:16px; }
 .workspace-topbar .workspace-extension-link { margin-left:auto; white-space:nowrap; }
 .workspace-main { width:100%; max-width:1320px; padding:44px 48px 40px; margin:0 auto; flex:1; outline:none; }
-.workspace-footer { max-width:1320px; margin:auto auto 0; padding:18px 48px 25px; width:100%; display:flex; justify-content:flex-end; color:#76767c; font-size:11px; }
+.workspace-footer { max-width:1320px; margin:auto auto 0; padding:18px 48px 25px; width:100%; display:flex; justify-content:space-between; align-items:center; gap:16px; color:#76767c; font-size:11px; }
+.workspace-back-to-top { display:inline-flex; align-items:center; gap:6px; min-height:32px; color:#0066cc; }
+.workspace-back-to-top:hover { text-decoration:underline; }
 .workspace-footer span:last-child { font-weight:600; letter-spacing:-.4px; }
 .page-heading { display:flex; align-items:center; justify-content:space-between; gap:24px; margin-bottom:32px; }
 .workspace .eyebrow { font-size:11px; font-weight:500; color:#77777e; margin-bottom:12px; }

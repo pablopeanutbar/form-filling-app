@@ -10,6 +10,7 @@ import { Login } from './pages/Login.jsx';
 import { Register } from './pages/Register.jsx';
 import { Home } from './pages/Home.jsx';
 import { AccountPages } from './pages/AccountPages.jsx';
+import { SmoothScrollingProvider } from './hooks/useSmoothScrolling.js';
 
 const AppShell = lazy(() => import('./components/layout/AppShell.jsx').then((module) => ({ default: module.AppShell })));
 const MyInformation = lazy(() => import('./pages/MyInformation.jsx').then((module) => ({ default: module.MyInformation })));
@@ -20,7 +21,7 @@ const pageError = <main className="min-h-screen bg-former-canvas flex items-cent
 
 // A data router enables blocking unsaved edits, including browser Back navigation.
 const router = createBrowserRouter([{
-  element: <AuthProvider><Outlet /></AuthProvider>,
+  element: <AuthProvider><SmoothScrollingProvider><Outlet /></SmoothScrollingProvider></AuthProvider>,
   errorElement: pageError,
   children: [
     { path: '/', element: <LandingPage /> },

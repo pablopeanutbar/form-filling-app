@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, Chrome, Copy, Download, FileCheck2, Globe, Hand, Info, ListFilter, ScanLine, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
@@ -98,6 +98,9 @@ function InstallationGuide() {
 
 export function Extension() {
   const { isAuthenticated, loading } = useAuth();
+  useLayoutEffect(() => {
+    if (!window.location.hash) window.scrollTo({ top: 0, behavior: 'instant' });
+  }, []);
   useEffect(() => {
     const previous = document.title;
     document.title = 'Get the Chrome extension — formER';

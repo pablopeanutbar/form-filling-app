@@ -26,7 +26,7 @@ import { useAuth } from '../context/AuthContext.jsx';
  * - Interactive Simulated Autofill Preview ("WATCH IT FILL"): Real click-driven interactive form demo
  *         populating synthetic values with confidence tags and sensitive field exclusion.
  * - Dual Core Comparison: Side-by-side comparison between Web Profile Hub and Browser Extension with specs table and CTAs.
- * - Footer: Self-drawing vector formER brand mark, navigation links, privacy trust statement, and MIT attribution.
+ * - Footer: Self-drawing vector formER brand mark, navigation links and privacy trust statement.
  */
 
 if (typeof window !== 'undefined') {
@@ -250,45 +250,6 @@ export const LandingPage = () => {
     { label: 'Interactive Demo', href: '#demo' }
   ];
 
-  // ---- Floating cards data ----
-  const floatingCards = [
-    {
-      label: 'Personal Information',
-      name: 'Legal Identity',
-      body: 'Full name, date of birth, gender, and family guardian records securely stored once.',
-      color: '#0071E3',
-      ink: '#FFFFFF'
-    },
-    {
-      label: 'Contact Points',
-      name: 'Communications',
-      body: 'Primary phone, alternate numbers, and email accounts ready for instant contact fields.',
-      color: '#123E2C',
-      ink: '#F5ECE1'
-    },
-    {
-      label: 'Addresses',
-      name: 'Dual Residencies',
-      body: 'Explicit separation of permanent home addresses and temporary correspondence locations.',
-      color: '#4A2E26',
-      ink: '#F5ECE1'
-    },
-    {
-      label: 'Academic Records',
-      name: 'Multi-Degree Qualifications',
-      body: '10th, 12th, undergraduate degrees, GPA scales, and passing years preserved per record.',
-      color: '#2A3C4D',
-      ink: '#FFFFFF'
-    },
-    {
-      label: 'Safety Guarantee',
-      name: 'Review First Control',
-      body: 'Ambiguous matches are flagged for your review. No form is ever submitted without you.',
-      color: '#1D1D1F',
-      ink: '#FFFFFF'
-    }
-  ];
-
   // ---- Six-step journey data ----
   const processSteps = [
     {
@@ -373,7 +334,6 @@ export const LandingPage = () => {
   const [active, setActive] = React.useState('');
   const [menu, setMenu] = React.useState(false);
   const [storyStep, setStoryStep] = React.useState(0);
-  const [floatActive, setFloatActive] = React.useState(-1);
   const [selectedDemo, setSelectedDemo] = React.useState('job');
   const [isDemoFilled, setIsDemoFilled] = React.useState(false);
   const [isAutofilling, setIsAutofilling] = React.useState(false);
@@ -776,63 +736,6 @@ export const LandingPage = () => {
           );
         }
 
-        // Floating Cards: Staggered multi-speed parallax and middle-screen caption trigger
-        for (const slot of qa('[data-float]')) {
-          const sp = Number(slot.getAttribute('data-speed')) || 1;
-          const card = slot.firstElementChild;
-          gsap.fromTo(
-            slot,
-            { y: 110 * sp },
-            {
-              y: -110 * sp,
-              ease: 'none',
-              scrollTrigger: { trigger: slot, start: 'top bottom', end: 'bottom top', scrub: 0.6 }
-            }
-          );
-          if (card) {
-            gsap.fromTo(
-              card,
-              { rotate: slot.classList.contains('is-l') ? -7 : 7 },
-              {
-                rotate: slot.classList.contains('is-l') ? 4 : -4,
-                ease: 'none',
-                scrollTrigger: { trigger: slot, start: 'top bottom', end: 'bottom top', scrub: 0.6 }
-              }
-            );
-          }
-          const i = Number(slot.getAttribute('data-float'));
-          ScrollTrigger.create({
-            trigger: slot,
-            start: 'top 58%',
-            end: 'bottom 42%',
-            onToggle: (self) => self.isActive && setFloatActive(i)
-          });
-        }
-
-        // 3D Perspective Tilt on Profile Identity Cards
-        for (const card of qa('.ac-pack')) {
-          const art = card.querySelector('.ac-pack-tilt');
-          if (!art || !window.matchMedia('(pointer: fine)').matches) continue;
-          const rx = gsap.quickTo(art, 'rotationX', { duration: 0.6, ease: 'power3.out' });
-          const ry = gsap.quickTo(art, 'rotationY', { duration: 0.6, ease: 'power3.out' });
-          const onMove = (e) => {
-            const r = card.getBoundingClientRect();
-            ry(((e.clientX - r.left) / r.width - 0.5) * 24);
-            rx(-((e.clientY - r.top) / r.height - 0.5) * 16);
-            card.style.setProperty('--gx', (((e.clientX - r.left) / r.width) * 100).toFixed(1) + '%');
-          };
-          const onLeave = () => {
-            rx(0);
-            ry(0);
-          };
-          card.addEventListener('pointermove', onMove);
-          card.addEventListener('pointerleave', onLeave);
-          cleanups.push(() => {
-            card.removeEventListener('pointermove', onMove);
-            card.removeEventListener('pointerleave', onLeave);
-          });
-        }
-
         // Horizontal Strip: Vertical scroll drives horizontal movement
         const track = q('.ac-strip-track');
         const stripStage = q('.ac-strip-stage');
@@ -930,7 +833,6 @@ export const LandingPage = () => {
   };
 
   const activeDemoData = demoScenarios.find((s) => s.id === selectedDemo) || demoScenarios[0];
-  const curFloat = floatActive >= 0 ? floatingCards[floatActive] : null;
 
   return (
     <div
@@ -1103,8 +1005,7 @@ export const LandingPage = () => {
 
             {/* Form Sheet Arrival Caption */}
             <div className="ac-field-cap">
-              <p className="ac-eyebrow">Zero Re-typing · Full User Verification</p>
-              <p>Your details saved in one secure profile, ready to assist on any supported form.</p>
+              <p className="ac-eyebrow">Zero re-typing</p>
             </div>
 
             {/* Right HUD Scale */}
@@ -1250,84 +1151,6 @@ export const LandingPage = () => {
                 </button>
               ))}
             </div>
-          </div>
-        </section>
-
-        {/* ---- Floating Document Showcase: YOUR INFO. STORED ONCE. ---- */}
-        <section className="ac-bean" data-sec="info" data-nav="info">
-          {/* Two 3D Perspective Tilt Master Cards */}
-          <div className="ac-packs">
-            <div className="ac-pack">
-              <div className="ac-pack-tilt">
-                <ProfileMasterCard uid={uid + 'p1'} kind="personal" />
-                <span className="ac-pack-tag">Master Vault</span>
-              </div>
-              <p className="ac-pack-cap">
-                <b>Personal & Identity Record</b>
-                <span>Legal name, contact & address</span>
-              </p>
-            </div>
-
-            <div className="ac-pack">
-              <div className="ac-pack-tilt">
-                <ProfileMasterCard uid={uid + 'p2'} kind="education" />
-                <span className="ac-pack-tag">Academic Store</span>
-              </div>
-              <p className="ac-pack-cap">
-                <b>Qualifications & Education</b>
-                <span>Multi-degree history & grades</span>
-              </p>
-            </div>
-          </div>
-
-          <p className="ac-pack-note" data-rise>
-            Your information stays in your private encrypted vault. No external marketing cookies, no silent data
-            aggregation, and zero selling of your personal records.
-          </p>
-
-          <div className="ac-show">
-            <p className="ac-show-kicker">Canonical Information Architecture</p>
-            <h2 className="ac-display" aria-label="YOUR INFO. STORED ONCE.">
-              <span className="ac-line">{chars('YOUR INFO.', 'ac-display-char')}</span>
-              <span className="ac-line">{chars('STORED ONCE.', 'ac-display-char')}</span>
-            </h2>
-            <p className="ac-show-sub" data-rise>
-              Organized into well-defined schemas so every field on every online form knows exactly which answer belongs.
-            </p>
-          </div>
-
-          {/* Staggered Multi-Speed Floating Parallax Cards */}
-          <div className="ac-float">
-            <div className="ac-float-cap" aria-live="polite">
-              <div className={`ac-float-sticky${curFloat ? ' is-on' : ''}`}>
-                {curFloat && (
-                  <div key={floatActive}>
-                    <p className="ac-float-label">{curFloat.label}</p>
-                    <p className="ac-float-name">{curFloat.name}</p>
-                    <p className="ac-float-body">{curFloat.body}</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {floatingCards.map((c, i) => (
-              <div
-                key={c.label + i}
-                className={`ac-float-slot${i % 2 ? ' is-l' : ' is-r'}`}
-                data-float={i}
-                data-speed={[0.6, 1.3, 0.9, 1.5, 0.7][i % 5]}
-              >
-                <div
-                  className="ac-fcard"
-                  style={{ '--c': c.color, '--ink': c.ink }}
-                  onClick={() => setFloatActive(i)}
-                >
-                  <span className="ac-fcard-label">{c.label}</span>
-                  <span className="ac-fcard-name">{c.name}</span>
-                  <span className="ac-fcard-body">{c.body}</span>
-                </div>
-              </div>
-            ))}
           </div>
         </section>
 
@@ -1517,104 +1340,6 @@ export const LandingPage = () => {
           </div>
         </section>
 
-        {/* ---- Dual Core Comparison: TWO SIDES OF ONE SYSTEM ---- */}
-        <section className="ac-limited" data-sec="limited">
-          <div className="ac-limited-head" data-rise>
-            <p className="ac-tag ac-tag-line">Complete Ecosystem</p>
-            <h2>
-              <span>TWO SIDES OF ONE SYSTEM.</span>
-              <span>YOUR VAULT & YOUR IN-PAGE COMPANION.</span>
-            </h2>
-            <p>
-              formER pairs a secure cloud profile vault with a lightweight browser extension that assists you on live
-              web forms.
-            </p>
-          </div>
-
-          <div className="ac-compare">
-            {/* Side A: Web Profile Hub */}
-            <article className="ac-cmp-prod">
-              <div className="ac-cmp-art">
-                <ProfileMasterCard uid={uid + 'ca'} kind="personal" />
-              </div>
-              <h3>Web Profile Hub</h3>
-              <b className="ac-price">Master Vault</b>
-              <p className="text-xs text-white/60 mt-1 max-w-[240px]">
-                Comprehensive personal, contact, address, and educational qualifications manager.
-              </p>
-              <div className="ac-buy mt-4">
-                <Link to="/register" className="ac-btn ac-btn-line">
-                  Create master profile
-                </Link>
-              </div>
-            </article>
-
-            {/* Side B: Chrome Extension */}
-            <article className="ac-cmp-prod is-b">
-              <div className="ac-cmp-art">
-                <ProfileMasterCard uid={uid + 'cb'} kind="education" />
-              </div>
-              <h3>Chrome Extension</h3>
-              <b className="ac-price">In-Page Assistant</b>
-              <p className="text-xs text-white/60 mt-1 max-w-[240px]">
-                Detects form fields on live web pages and applies approved answers with one click.
-              </p>
-              <div className="ac-buy mt-4">
-                <Link to="/register" className="ac-btn ac-btn-line">
-                  Get started
-                </Link>
-              </div>
-            </article>
-
-            {/* Comparison Table */}
-            <dl className="ac-cmp-table">
-              <div>
-                <dd>Profile & Record Management</dd>
-                <dt>Primary Role</dt>
-                <dd>Form Inspection & Fill</dd>
-              </div>
-              <div>
-                <dd>HttpOnly Sessions & Encrypted Vault</dd>
-                <dt>Security Boundary</dt>
-                <dd>Zero Data Collection Sandbox</dd>
-              </div>
-              <div>
-                <dd>Personal, Address, Multi-Education</dd>
-                <dt>Data Scope</dt>
-                <dd>Inputs, Dropdowns, Radios</dd>
-              </div>
-              <div>
-                <dd>Canonical Structured Schema</dd>
-                <dt>Ambiguity Check</dt>
-                <dd>Confidence & Review Flags</dd>
-              </div>
-              <div>
-                <dd>User Explicit Action</dd>
-                <dt>Form Submission</dt>
-                <dd>Manual User Submit Only</dd>
-              </div>
-            </dl>
-          </div>
-
-          {/* Final Call to Action */}
-          <div className="ac-limited-cta" data-rise>
-            <h3 className="text-2xl font-bold text-white mb-3">Ready to stop starting from scratch?</h3>
-            <p className="text-sm text-white/70 max-w-md mx-auto mb-6">
-              Create your account in 30 seconds. Save your information once, and experience form filling without
-              repetitive typing.
-            </p>
-            <div className="flex items-center justify-center gap-4 flex-wrap">
-              <Link to="/register" className="ac-btn">
-                Get started with formER
-              </Link>
-              <Link to="/login" className="ac-btn ac-btn-line">
-                Sign in to your account
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* ---- Footer ---- */}
         <footer className="ac-foot" data-sec="footer">
           {/* Self-drawing FormerMark */}
           <svg className="ac-foot-mark" viewBox="0 0 64 64" aria-hidden="true">
@@ -1639,11 +1364,6 @@ export const LandingPage = () => {
                 <li>
                   <a href="#top" onClick={handleLinkClick('#top')}>
                     Overview
-                  </a>
-                </li>
-                <li>
-                  <a href="#info" onClick={handleLinkClick('#info')}>
-                    Profile Vault
                   </a>
                 </li>
                 <li>
@@ -1676,44 +1396,11 @@ export const LandingPage = () => {
               </ul>
             </div>
 
-            <div>
-              <h3>Security & Privacy</h3>
-              <ul>
-                <li>
-                  <span className="opacity-80">Zero Form Submission Policy</span>
-                </li>
-                <li>
-                  <span className="opacity-80">Sensitive Field Exclusion</span>
-                </li>
-                <li>
-                  <span className="opacity-80">HttpOnly Encrypted Sessions</span>
-                </li>
-              </ul>
-            </div>
-
-            <div>
-              <h3>Architecture</h3>
-              <ul>
-                <li>
-                  <span className="opacity-80">Deterministic Matching</span>
-                </li>
-                <li>
-                  <span className="opacity-80">MiniLM Local Embeddings</span>
-                </li>
-                <li>
-                  <span className="opacity-80">Chrome Manifest V3</span>
-                </li>
-              </ul>
-            </div>
           </div>
 
           <div className="ac-foot-base">
             <span className="ac-foot-word">
               <FormerMark size={20} className="text-primary inline-block mr-1" /> formER
-            </span>
-            <span>
-              &copy; {new Date().getFullYear()} formER platform. Built with precision. Adapted from Alto Coffee Template by
-              Kedhareswer Naidu (MIT License).
             </span>
             <span className="ac-foot-social">
               <span className="opacity-60 text-xs">Privacy by design &bull; Consent first</span>
@@ -1730,7 +1417,7 @@ export const LandingPage = () => {
 /** Illustrated Form Document Sheet revealed after cloud white-out in Hero */
 function HeroFormInterface({ uid }) {
   return (
-    <svg className="ac-field-art" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+    <svg className="ac-field-art" viewBox="360 240 880 760" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
       <defs>
         <linearGradient id={uid + 'sheetBg'} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" stopColor="#FFFFFF" />
@@ -1788,40 +1475,6 @@ function ProfileStackArt({ uid }) {
             VERIFIED 100%
           </text>
         </g>
-      </g>
-    </svg>
-  );
-}
-
-/** 3D Perspective Tilt Master Profile Cards */
-function ProfileMasterCard({ uid, kind }) {
-  const isEdu = kind === 'education';
-  return (
-    <svg className="ac-pack-art" viewBox="0 0 300 420" aria-hidden="true">
-      <defs>
-        <linearGradient id={uid + 'cardGrad'} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor={isEdu ? '#1A2938' : '#0071E3'} />
-          <stop offset="1" stopColor={isEdu ? '#0E1720' : '#005BB5'} />
-        </linearGradient>
-      </defs>
-      <rect x="20" y="30" width="260" height="360" rx="20" fill={`url(#${uid}cardGrad)`} />
-      <rect x="40" y="60" width="50" height="50" rx="12" fill="#FFFFFF" opacity="0.2" />
-      <FormerMark size={28} className="text-white" />
-      <text x="40" y="150" fill="#FFFFFF" fontSize="22" fontWeight="700" fontFamily="sans-serif">
-        {isEdu ? 'Academic Profile' : 'Personal Profile'}
-      </text>
-      <text x="40" y="174" fill="#FFFFFF" opacity="0.7" fontSize="12" fontFamily="sans-serif">
-        {isEdu ? 'Degrees · Grades · Boards' : 'Legal Name · Identity · Contact'}
-      </text>
-      <rect x="40" y="210" width="220" height="1" fill="#FFFFFF" opacity="0.2" />
-      <rect x="40" y="230" width="180" height="8" rx="4" fill="#FFFFFF" opacity="0.4" />
-      <rect x="40" y="250" width="140" height="8" rx="4" fill="#FFFFFF" opacity="0.4" />
-      <rect x="40" y="270" width="160" height="8" rx="4" fill="#FFFFFF" opacity="0.4" />
-      <g transform="translate(40, 316)">
-        <rect x="0" y="0" width="100" height="26" rx="13" fill="#FFFFFF" opacity="0.2" />
-        <text x="50" y="17" fill="#FFFFFF" fontSize="11" fontWeight="700" textAnchor="middle">
-          CANONICAL
-        </text>
       </g>
     </svg>
   );
@@ -1956,7 +1609,7 @@ const CSS = `
 .ac-hero { position: relative; height: calc(var(--h) * 3.6); background: var(--ac-skyBottom); }
 .ac-hero-stage { position: sticky; top: 0; height: var(--h); min-height: 560px; overflow: hidden; }
 .ac-sky { position: absolute; inset: 0; background: linear-gradient(180deg, var(--ac-skyTop) 0%, var(--ac-skyBottom) 70%); }
-.ac-peak, .ac-field-art { position: absolute; left: 0; bottom: 0; width: 100%; height: 100%; max-width: none; }
+.ac-peak { position: absolute; left: 0; bottom: 0; width: 100%; height: 100%; max-width: none; }
 .ac-cloud { position: absolute; left: 0; right: 0; pointer-events: none; transition: opacity 1s; }
 .ac-cloud i {
   position: absolute; top: 0; left: 0; bottom: 0;
@@ -1983,7 +1636,7 @@ const CSS = `
   position: relative;
   color: #fff;
   font-weight: 800;
-  font-size: clamp(52px, 10.4cqi, 160px);
+  font-size: clamp(44px, 9.2cqi, 140px);
   line-height: .9;
   letter-spacing: -.04em;
   text-shadow: 0 6px 40px rgba(10,25,45,.4);
@@ -1995,7 +1648,8 @@ const CSS = `
 .ac-hero-char, .ac-crop-char { display: inline-block; will-change: transform; }
 .ac-display-char { display: inline-block; will-change: transform; }
 
-.ac-field { position: absolute; inset: 0; opacity: 0; transform-origin: 50% 100%; }
+.ac-field { position: absolute; inset: 64px 0 0; display: grid; place-items: center; opacity: 0; transform-origin: 50% 100%; }
+.ac-field-art { display: block; width: min(48%, 520px); height: min(64%, 460px); }
 .ac-veil {
   position: absolute; inset: 0;
   opacity: 0;
@@ -2033,7 +1687,6 @@ const CSS = `
   opacity: 0;
   text-shadow: 0 2px 20px rgba(0,0,0,.5);
 }
-.ac-field-cap p:last-child { margin-top: 10px; font-size: clamp(15px, 1.5cqi, 18px); line-height: 1.55; }
 
 .ac-hud {
   position: absolute;
@@ -2237,44 +1890,7 @@ const CSS = `
 .ac-map-years span { font-size: 15px; font-weight: 800; }
 .ac-map-years small { font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: #fff; opacity: .75; }
 
-/* Floating Document Showcase */
-.ac-bean {
-  position: relative;
-  overflow: hidden;
-  background: var(--ac-brown);
-  padding: clamp(80px, 9cqi, 140px) clamp(16px, 4cqi, 64px) clamp(40px, 5cqi, 80px);
-}
-.ac-packs { display: flex; justify-content: center; flex-wrap: wrap; gap: clamp(14px, 2cqi, 26px); }
-.ac-pack { width: min(260px, 42cqi); perspective: 1000px; --gx: 50%; }
-.ac-pack-tilt {
-  position: relative;
-  display: grid; place-items: center;
-  aspect-ratio: 5/6;
-  border-radius: 14px;
-  overflow: hidden;
-  transform-style: preserve-3d;
-  background: radial-gradient(110% 80% at var(--gx) 0%, rgba(255,255,255,.15), transparent 60%), #141A22;
-  box-shadow: 0 24px 50px rgba(0,0,0,.35);
-  border: 1px solid rgba(255,255,255,.08);
-}
-.ac-pack-tag {
-  position: absolute; right: 12px; top: 12px;
-  padding: 4px 10px;
-  border-radius: 99px;
-  background: rgba(0,0,0,.35);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-}
-.ac-pack-art { display: block; width: 66%; height: auto; transform: translateZ(36px); filter: drop-shadow(0 18px 20px rgba(0,0,0,.4)); }
-.ac-pack-cap { display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top: 12px; text-align: center; font-size: 13px; }
-.ac-pack-cap span { opacity: .6; font-size: 12px; }
-.ac-pack-note { max-width: 440px; margin: 30px auto 0; text-align: center; font-size: 13px; line-height: 1.7; color: rgba(255,255,255,.65); }
-
 .ac-show { margin-top: clamp(100px, 13cqi, 200px); text-align: center; }
-.ac-show-kicker { font-size: 13px; font-weight: 600; letter-spacing: .08em; color: var(--ac-tan); }
 .ac-show-pill {
   display: inline-block;
   padding: 6px 16px;
@@ -2300,37 +1916,6 @@ const CSS = `
 .ac-display-red { color: var(--ac-salmon); }
 .ac-display-char { display: inline-block; }
 .ac-show-sub { max-width: 440px; margin: 24px auto 0; font-size: 13px; line-height: 1.7; color: rgba(255,255,255,.65); }
-
-/* Floating Cards Parallax */
-.ac-float { position: relative; max-width: 1240px; margin: clamp(70px, 9cqi, 140px) auto 0; padding: 6vh 0 calc(10vh + 90px); }
-.ac-float-cap { position: absolute; inset: 0; left: 28%; right: 28%; pointer-events: none; }
-.ac-float-sticky { position: sticky; top: calc(50% - 90px); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; text-align: center; }
-.ac-float-sticky > div { animation: ac-cap .6s cubic-bezier(.2,.8,.2,1) both; }
-@keyframes ac-cap { from { opacity: 0; transform: translateY(16px); } }
-.ac-float-label { font-size: 11px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: var(--ac-accent); }
-.ac-float-name { margin-top: 8px; font-family: var(--ac-display); font-weight: 300; font-size: clamp(32px, 4.2cqi, 60px); line-height: 1; color: #fff; }
-.ac-float-body { max-width: 32ch; margin: 12px auto 0; font-size: 14px; line-height: 1.6; color: rgba(255,255,255,.7); }
-
-.ac-float-slot { position: relative; width: clamp(160px, 20cqi, 260px); margin-bottom: clamp(-80px, -5cqi, -30px); }
-.ac-float-slot.is-r { margin-left: auto; margin-right: 4%; }
-.ac-float-slot.is-l { margin-left: 4%; }
-.ac-fcard {
-  position: relative;
-  display: flex; flex-direction: column; justify-content: space-between;
-  width: 100%; aspect-ratio: 4/5;
-  padding: 18px;
-  border-radius: 14px;
-  overflow: hidden;
-  text-align: left;
-  background: var(--c);
-  color: var(--ink);
-  box-shadow: 0 24px 50px rgba(0,0,0,.35);
-  transition: transform .3s, box-shadow .3s;
-}
-.ac-fcard:hover { transform: translateY(-4px); box-shadow: 0 32px 64px rgba(0,0,0,.45); }
-.ac-fcard-label { font-size: 10px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; opacity: .85; }
-.ac-fcard-name { margin-top: auto; font-size: clamp(16px, 1.6cqi, 22px); font-weight: 800; letter-spacing: -.01em; line-height: 1.1; }
-.ac-fcard-body { font-size: 12px; line-height: 1.45; opacity: .85; margin-top: 8px; }
 
 /* Horizontal Process Strip */
 .ac-strip { position: relative; height: calc(var(--h) * 3); background: var(--ac-brown); }
@@ -2408,59 +1993,6 @@ const CSS = `
   display: flex; flex-direction: column; justify-content: space-between;
 }
 
-/* Dual Core Comparison */
-.ac-limited { position: relative; background: var(--ac-brown); padding: clamp(100px, 11cqi, 170px) clamp(16px, 4cqi, 64px); }
-.ac-limited-head { text-align: center; }
-.ac-tag-line {
-  background: transparent;
-  color: var(--ac-tan);
-  border: 1px solid rgba(0, 113, 227, 0.4);
-  border-radius: 99px;
-  padding: 6px 16px;
-  display: inline-block;
-  font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
-}
-.ac-limited-head h2 {
-  display: flex; flex-direction: column;
-  margin: 20px auto 0;
-  font-size: clamp(30px, 4.4cqi, 60px);
-  font-weight: 800;
-  line-height: 1.08;
-  letter-spacing: -.03em;
-  color: #fff;
-}
-.ac-limited-head h2 span:first-child { color: var(--ac-tan); }
-.ac-limited-head p { max-width: 440px; margin: 16px auto 0; font-size: 14px; line-height: 1.7; color: rgba(255,255,255,.65); }
-
-.ac-compare { display: grid; grid-template-columns: 1fr 1fr; column-gap: clamp(20px, 6cqi, 100px); max-width: 880px; margin: 60px auto 0; }
-.ac-cmp-prod { display: flex; flex-direction: column; align-items: center; text-align: center; }
-.ac-cmp-art { position: relative; display: grid; place-items: center; width: min(240px, 100%); aspect-ratio: 5/6; }
-.ac-cmp-art .ac-pack-art { width: 78%; transition: transform .6s cubic-bezier(.2,.8,.2,1); }
-.ac-cmp-prod:hover .ac-cmp-art .ac-pack-art { transform: translateY(-8px); }
-.ac-cmp-prod h3 { margin-top: 12px; font-size: 18px; font-weight: 700; color: #fff; }
-.ac-price { display: block; margin-top: 2px; font-size: 13px; font-weight: 700; color: var(--ac-accent); text-transform: uppercase; letter-spacing: .1em; }
-
-.ac-buy { display: flex; align-items: center; justify-content: center; margin-top: 14px; }
-.ac-btn-line {
-  height: 42px;
-  padding: 0 20px;
-  background: transparent;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3);
-  color: #fff;
-  border-radius: 99px;
-  font-size: 13px;
-  font-weight: 700;
-  transition: all .2s;
-}
-.ac-btn-line:hover { background: var(--ac-accent); box-shadow: none; }
-
-.ac-cmp-table { grid-column: 1 / -1; margin-top: 50px; border-top: 1px solid rgba(255, 255, 255, .12); }
-.ac-cmp-table div { display: grid; grid-template-columns: 1fr 140px 1fr; align-items: center; gap: 12px; padding: 14px 0; border-bottom: 1px solid rgba(255, 255, 255, .12); font-size: 13px; }
-.ac-cmp-table dt { font-size: 11px; font-weight: 600; letter-spacing: .15em; text-transform: uppercase; text-align: center; color: rgba(255,255,255,.5); }
-.ac-cmp-table dd { text-align: center; font-weight: 600; color: #fff; }
-
-.ac-limited-cta { margin-top: 60px; text-align: center; }
-
 /* Buttons */
 .ac-btn {
   display: inline-flex; align-items: center; justify-content: center;
@@ -2486,9 +2018,9 @@ const CSS = `
 
 .ac-foot-cols {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 28px;
-  max-width: 980px;
+  max-width: 480px;
   margin: 64px auto 0;
   text-align: left;
 }
@@ -2521,8 +2053,6 @@ const CSS = `
   .ac-map-years button::after { left: 10px; right: 10px; top: auto; bottom: 0; width: auto; height: 2px; transform: scaleX(.3); }
   .ac-map-years button.is-on::after { transform: scaleX(1); }
   .ac-map-blurb { display: none; }
-  .ac-foot-cols { grid-template-columns: repeat(2, 1fr); }
-  .ac-float-cap { left: 20%; right: 20%; }
 }
 
 @container (min-width: 901px) {
@@ -2530,6 +2060,7 @@ const CSS = `
 }
 
 @container (max-width: 600px) {
+  .ac-field-art { width: 72%; }
   .ac-line { white-space: normal; text-wrap: balance; }
   .ac-crop-stats { grid-template-columns: 1fr; }
   .ac-crop-stats div + div { border-left: 0; border-top: 1px solid rgba(255, 255, 255, .2); margin-top: 16px; }
@@ -2539,12 +2070,6 @@ const CSS = `
   .ac-hud-scale { display: none; }
   .ac-hud { top: 80px; transform: none; }
   .ac-hud-read b { font-size: 22px; }
-  .ac-float-cap { display: none; }
-  .ac-float-slot { width: 46cqi; margin-bottom: 24px; }
-  .ac-float-slot.is-r { margin-right: 0; }
-  .ac-float-slot.is-l { margin-left: 0; margin-top: -12cqi; }
-  .ac-compare { column-gap: 14px; grid-template-columns: 1fr; row-gap: 32px; }
-  .ac-cmp-table div { grid-template-columns: 1fr 80px 1fr; font-size: 12px; }
 }
 
 /* Reduced Motion Mode */

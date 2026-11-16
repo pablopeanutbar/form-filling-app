@@ -1,4 +1,15 @@
 .extension-page { background: var(--color-background); color: var(--color-text); font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; line-height: 1.65; }
+.extension-page main [id] { scroll-margin-top: 24px; }
+
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.extension-page #extension-content) { scroll-behavior: smooth; }
+  .extension-page > main { animation: extension-page-fade 380ms cubic-bezier(.2,.65,.3,1); }
+}
+
+@keyframes extension-page-fade {
+  from { opacity: .45; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 .extension-page * { box-sizing: border-box; }
 .extension-page :is(h1, h2, h3, p, figure) { margin: 0; }
 .extension-page a { text-decoration: none; }

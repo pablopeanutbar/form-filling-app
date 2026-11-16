@@ -2,6 +2,10 @@
 
 ## Workspace cleanup
 
+- Moved Lenis to the shared site layout so smooth wheel scrolling also covers My Information, extension pages, and public routes. Increased responsiveness and retained native scrolling for touch, dialogs, and reduced-motion users.
+
+- Added a more visible 380 ms content fade with a small lift on workspace navigation and extension pages. Lenis smooths wheel and trackpad scrolling in the workspace and extension guide. Extension guide links and the workspace Back to top action also scroll smoothly. Touch scrolling stays native and reduced motion skips the new effects. All 13 workspace tests passed.
+
 - Account Settings now uses a full-width stack with a dedicated Extension connections card linking to the existing management page. Removed the settings sidebar and saved-information card.
 
 - Simplified workspace headers to page titles, removed the footer tagline, and trimmed the dashboard profile callout.
@@ -382,3 +386,9 @@ The authenticated application was cleanly relocated to `/app` (with `/dashboard`
 - **Milestone 4**: Intelligent Field Matching Engine (Canonical registry, Rule-based matching, MiniLM semantic inference, Decision engine).
 - **Milestone 5**: Chrome Extension Foundation (Manifest V3, Content script form detection & extraction, Matching contract alignment).
 - **Milestone 6A**: Frontend Foundation & Authentication (React, Vite, Tailwind CSS, Session restoration, CSRF management, Auth forms).
+## Landing page cleanup
+
+- Reduced the hero headline size, centered a smaller form illustration below the navbar, and shortened its caption to “Zero re-typing.”
+
+- Removed the profile showcase and ecosystem comparison, their unused animations and styles, and the obsolete Profile Vault footer link. Simplified the footer to Product and Account links and kept template attribution in the source. The frontend production build passed.
+
