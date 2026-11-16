@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { AuthLayout } from '../components/layout/AuthLayout.jsx';
-import { Card } from '../components/common/Card.jsx';
 import { Input } from '../components/common/Input.jsx';
 import { Button } from '../components/common/Button.jsx';
 import { Alert } from '../components/common/Alert.jsx';
@@ -100,8 +99,8 @@ export const Register = () => {
       title="Create your account"
       subtitle="Keep your details together for your next application."
     >
-      <Card>
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+      <div>
+        <form onSubmit={handleSubmit} className="auth-form" noValidate aria-busy={isSubmitting}>
           {generalError && <Alert variant="error" message={generalError} />}
 
           <Input
@@ -134,7 +133,7 @@ export const Register = () => {
 
           {/* Password Strength Checklist */}
           {formData.password.length > 0 && (
-            <div className="p-3 bg-former-canvas rounded-lg border border-former-border text-xs space-y-1.5">
+            <div className="auth-requirements space-y-1.5">
               <p className="font-medium text-former-secondary mb-1">Password requirements:</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                 <RequirementItem valid={passwordChecks.length} text="At least 8 characters" />
@@ -171,18 +170,18 @@ export const Register = () => {
           </Button>
         </form>
 
-        <div className="mt-6 pt-5 border-t border-former-border text-center">
-          <p className="text-[14px] text-former-secondary">
+        <div className="auth-switch auth-enter" style={{ animationDelay: '360ms' }}>
+          <p>
             Already have an account?{' '}
             <Link
               to="/login"
               className="font-medium text-primary hover:text-primary-hover underline-offset-4 hover:underline"
             >
-              Sign in
+              Log in
             </Link>
           </p>
         </div>
-      </Card>
+      </div>
     </AuthLayout>
   );
 };

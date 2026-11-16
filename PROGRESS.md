@@ -1,5 +1,20 @@
 # formER — Development Progress Tracking
 
+## Shared Login / Signup design — 2026-11-16
+- Adapted the supplied MIT Hirael Login 03 reference into JavaScript JSX in `client/src/components/layout/AuthLayout.jsx`, with attribution retained. Both auth pages share the two-column layout, existing formER auth logo, animated left panel, typography, spacing, home link, and mobile layout.
+- Added scoped `AuthLayout.css`. Preserved both sets of 36 reference SVG curves and their deterministic 20–30 second flow using normalized SVG strokes and CSS animation. Entrance animations retain the 500ms easing and 60ms stagger. Decorative motion is disabled on mobile and all auth animations respect reduced motion.
+- Updated `client/src/pages/Login.jsx` and `Register.jsx` presentation only: matching form styling, black #111111 primary buttons with #2A2A2A hover, white text, Apple-blue links, and form-specific labels. Retained existing email/password handling, validation, password requirements, accessible visibility toggles, loading/error feedback, and redirects.
+- No new dependencies, fake provider login, loading delays, testimonials, or unsupported security claims. No changes to the landing page, dashboard/profile management, backend, AuthContext, API client, routes, DESIGN.md, or PROJECT.md in this task.
+- Verification: JSX and CSS syntax parsing passed; diff whitespace check passed. No browser automation or full test suite was run, as requested. Visual and interactive acceptance remains with the owner.
+
+## Landing navigation and authentication CTAs — 2026-11-16
+- Updated `client/src/pages/LandingPage.jsx` only for navigation and hero CTAs. Navbar section links are Overview, How It Works, and Interactive Demo.
+- Existing AuthContext selects Log in / Sign up for visitors or Open dashboard for signed-in users. The centered hero CTA selects Get started (`/register`) or Go to dashboard (`/app`).
+- Reused Apple-blue pill styling and the existing arrow treatment. The new CTA follows the headline in normal flow inside its positioned container; a CTA-only fade leaves existing GSAP targets and timings intact.
+- Mobile navigation retains the logo, includes matching authentication actions, provides 44px touch targets, associates the hamburger with its navigation, and supports Escape/outside-focus dismissal.
+- Verification limited to source/diff inspection and JSX syntax checking. No browser automation, visual verification, or full test suite was run, as requested. Desktop/mobile layout and interactions await the owner's manual verification.
+- Authenticated application, authentication mechanism, backend, and unrelated landing sections were not modified.
+
 ## Current Development Milestone
 **Premium Application UI Sprint, Part 1 — implemented; automated checks passed; browser visual acceptance pending (2026-11-16)**
 

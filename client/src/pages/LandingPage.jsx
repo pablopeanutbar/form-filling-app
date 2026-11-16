@@ -246,8 +246,6 @@ export const LandingPage = () => {
   // ---- Navigation items ----
   const navLinks = [
     { label: 'Overview', href: '#top' },
-    { label: 'Story', href: '#story' },
-    { label: 'Your Info', href: '#info' },
     { label: 'How It Works', href: '#how-it-works' },
     { label: 'Interactive Demo', href: '#demo' }
   ];
@@ -384,6 +382,29 @@ export const LandingPage = () => {
   const ctxRef = React.useRef(null);
   const storyRef = React.useRef(0);
   const storyNav = React.useRef(null);
+  const menuButtonRef = React.useRef(null);
+  const headerRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!menu) return;
+    const dismissOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setMenu(false);
+        menuButtonRef.current?.focus();
+      }
+    };
+    const dismissOutside = (event) => {
+      if (!headerRef.current?.contains(event.target)) setMenu(false);
+    };
+    document.addEventListener('keydown', dismissOnEscape);
+    document.addEventListener('pointerdown', dismissOutside);
+    document.addEventListener('focusin', dismissOutside);
+    return () => {
+      document.removeEventListener('keydown', dismissOnEscape);
+      document.removeEventListener('pointerdown', dismissOutside);
+      document.removeEventListener('focusin', dismissOutside);
+    };
+  }, [menu]);
 
   // Generate seamless procedural textures once
   React.useLayoutEffect(() => {
@@ -561,6 +582,9 @@ export const LandingPage = () => {
           .fromTo(q('.ac-field-cap'), { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 1, ease: 'power2.out' }, 7.2)
           .to(q('.ac-hud'), { color: '#ffffff', duration: 0.6 }, 5.4)
           .to({}, { duration: 1.6 }, 8.2);
+
+        // Only the new CTA fades out; existing scene timings and headline motion stay intact.
+        heroTl.to(q('.ac-hero-cta'), { autoAlpha: 0, y: -24, duration: 1.2, ease: 'power1.in' }, 0.6);
 
         // Feature Stage: ONCE SAVED. READY TO FILL.
         gsap.from(qa('.ac-crop-char'), {
@@ -932,7 +956,7 @@ export const LandingPage = () => {
 
       <div className="ac-page">
         {/* ---- Header ---- */}
-        <header className={`ac-head${solid ? ' is-solid' : ''}`}>
+        <header ref={headerRef} className={`ac-head${solid ? ' is-solid' : ''}`}>
           <a className="ac-logo" href="#top" onClick={handleLinkClick('#top')} aria-label="formER home">
             <FormerMark size={28} className="ac-logo-mark text-primary" />
             <span className="tracking-tight text-white font-bold text-base">formER</span>
@@ -952,6 +976,7 @@ export const LandingPage = () => {
           </nav>
 
           <div className="ac-head-end">
+            <div className="ac-head-auth">
             {isAuthenticated ? (
               <Link to="/app" className="ac-pill">
                 <span>Open dashboard</span>
@@ -963,16 +988,19 @@ export const LandingPage = () => {
                   Log in
                 </Link>
                 <Link to="/register" className="ac-pill">
-                  <span>Get started</span>
+                  <span>Sign up</span>
                   <b>→</b>
                 </Link>
               </>
             )}
+            </div>
             <button
+              ref={menuButtonRef}
               type="button"
               className="ac-burger"
               aria-expanded={menu}
-              aria-label="Toggle navigation menu"
+              aria-controls={`${uid}-navigation`}
+              aria-label={menu ? 'Close navigation menu' : 'Open navigation menu'}
               onClick={() => setMenu((m) => !m)}
             >
               <i />
@@ -980,7 +1008,7 @@ export const LandingPage = () => {
             </button>
           </div>
 
-          <div className={`ac-menu${menu ? ' is-open' : ''}`} hidden={!menu}>
+          <nav id={`${uid}-navigation`} className={`ac-menu${menu ? ' is-open' : ''}`} hidden={!menu} aria-label="Mobile navigation">
             {navLinks.map((l) => (
               <a key={l.href + l.label} href={l.href} onClick={handleLinkClick(l.href)}>
                 {l.label}
@@ -988,21 +1016,21 @@ export const LandingPage = () => {
             ))}
             <div className="pt-2 mt-2 border-t border-white/10 flex flex-col gap-2">
               {isAuthenticated ? (
-                <Link to="/app" className="font-semibold text-primary p-2">
-                  Open dashboard →
+                <Link to="/app" className="ac-pill" onClick={() => setMenu(false)}>
+                  <span>Open dashboard</span><b aria-hidden="true">→</b>
                 </Link>
               ) : (
                 <>
-                  <Link to="/login" className="p-2 opacity-80">
+                  <Link to="/login" className="ac-login-link" onClick={() => setMenu(false)}>
                     Log in
                   </Link>
-                  <Link to="/register" className="font-semibold text-primary p-2">
-                    Create account →
+                  <Link to="/register" className="ac-pill" onClick={() => setMenu(false)}>
+                    <span>Sign up</span><b aria-hidden="true">→</b>
                   </Link>
                 </>
               )}
             </div>
-          </div>
+          </nav>
         </header>
 
         {/* ---- Hero: The Descent into the Form World ---- */}
@@ -1035,10 +1063,18 @@ export const LandingPage = () => {
             </div>
 
             {/* Hero Main Headline */}
-            <h1 className="ac-hero-title" aria-label="Your details. Every form.">
-              <span className="ac-line">{chars('Your details.', 'ac-hero-char')}</span>
-              <span className="ac-line">{chars('Every form.', 'ac-hero-char')}</span>
-            </h1>
+            <div className="ac-hero-intro">
+              <h1 className="ac-hero-title" aria-label="Your details. Every form.">
+                <span className="ac-line">{chars('Your details.', 'ac-hero-char')}</span>
+                <span className="ac-line">{chars('Every form.', 'ac-hero-char')}</span>
+              </h1>
+              <div className="ac-hero-cta">
+                <Link to={isAuthenticated ? '/app' : '/register'} className="ac-pill ac-hero-button">
+                  <span>{isAuthenticated ? 'Go to dashboard' : 'Get started'}</span>
+                  <b aria-hidden="true">→</b>
+                </Link>
+              </div>
+            </div>
 
             <div className="ac-cloud ac-cloud-mid" style={{ opacity: clouds[1] ? 1 : 0 }}>
               <i style={{ backgroundImage: clouds[1] ? `url(${clouds[1]})` : undefined }} />
@@ -1865,6 +1901,7 @@ const CSS = `
 }
 .ac-nav a:hover::after, .ac-nav a[aria-current]::after { transform: scaleX(1); }
 .ac-head-end { display: flex; align-items: center; gap: 12px; }
+.ac-head-auth { display: flex; align-items: center; gap: 12px; }
 .ac-login-link { font-size: 13px; font-weight: 600; opacity: .8; padding: 6px 10px; transition: opacity .2s; }
 .ac-login-link:hover { opacity: 1; }
 .ac-pill {
@@ -1881,6 +1918,7 @@ const CSS = `
   transition: transform .25s, background .25s;
 }
 .ac-pill:hover { transform: translateY(-1px); background: #0066CC; }
+.ac-pill:active { transform: scale(.98); background: #005BB5; }
 .ac-pill b {
   display: grid;
   place-items: center;
@@ -1891,7 +1929,7 @@ const CSS = `
   color: var(--ac-accent);
   font-size: 12px;
 }
-.ac-burger { display: none; flex-direction: column; justify-content: center; gap: 6px; width: 40px; height: 40px; padding: 0 10px; }
+.ac-burger { display: none; flex-direction: column; justify-content: center; gap: 6px; width: 44px; height: 44px; padding: 0 12px; }
 .ac-burger i { display: block; height: 2px; background: currentColor; border-radius: 2px; transition: transform .3s; }
 .ac-burger[aria-expanded="true"] i:first-child { transform: translateY(4px) rotate(45deg); }
 .ac-burger[aria-expanded="true"] i:last-child { transform: translateY(-4px) rotate(-45deg); }
@@ -1909,8 +1947,10 @@ const CSS = `
   box-shadow: 0 20px 50px rgba(0,0,0,.45);
 }
 .ac-menu[hidden] { display: none; }
-.ac-menu a { padding: 10px 14px; border-radius: 8px; font-weight: 600; font-size: 14px; }
+.ac-menu a { padding: 10px 14px; min-height: 44px; border-radius: 8px; font-weight: 600; font-size: 14px; }
 .ac-menu a:hover { background: rgba(255,255,255,.07); }
+.ac-menu a.ac-pill { border-radius: 99px; justify-content: center; background: #0071E3; color: #fff; }
+.ac-menu a.ac-pill:hover { background: #0066CC; }
 
 /* Hero */
 .ac-hero { position: relative; height: calc(var(--h) * 3.6); background: var(--ac-skyBottom); }
@@ -1932,11 +1972,15 @@ const CSS = `
 .ac-cloud-front i { animation-duration: 70s; }
 @keyframes ac-drift { to { transform: translateX(-50%); } }
 
-.ac-hero-title {
+.ac-hero-intro {
   position: absolute;
   left: 0; right: 0; top: 25%;
   z-index: 1;
   text-align: center;
+  pointer-events: none;
+}
+.ac-hero-title {
+  position: relative;
   color: #fff;
   font-weight: 800;
   font-size: clamp(52px, 10.4cqi, 160px);
@@ -1944,6 +1988,8 @@ const CSS = `
   letter-spacing: -.04em;
   text-shadow: 0 6px 40px rgba(10,25,45,.4);
 }
+.ac-hero-cta { margin-top: clamp(16px, 3vh, 28px); }
+.ac-hero-button { height: 50px; padding: 0 24px; font-size: 15px; background: #0071E3; pointer-events: auto; }
 .ac-line { display: block; overflow: hidden; padding: 0 .04em .08em; white-space: nowrap; }
 .ac-word { display: inline-block; white-space: nowrap; }
 .ac-hero-char, .ac-crop-char { display: inline-block; will-change: transform; }
@@ -2467,6 +2513,7 @@ const CSS = `
 /* Container Responsive Queries */
 @container (max-width: 900px) {
   .ac-nav { display: none; }
+  .ac-head-auth { display: none; }
   .ac-burger { display: inline-flex; }
   .ac-demo-stage { grid-template-columns: 1fr; }
   .ac-map-years { left: 16px; right: 16px; top: 76px; transform: none; flex-direction: row; justify-content: center; gap: 16px; }
@@ -2476,6 +2523,10 @@ const CSS = `
   .ac-map-blurb { display: none; }
   .ac-foot-cols { grid-template-columns: repeat(2, 1fr); }
   .ac-float-cap { left: 20%; right: 20%; }
+}
+
+@container (min-width: 901px) {
+  .ac-menu { display: none; }
 }
 
 @container (max-width: 600px) {

@@ -1,0 +1,118 @@
+/* Hirael Login 03 adaptation. Auth-only selectors keep other formER surfaces intact. */
+.former-auth {
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  background: #fff;
+  color: #111111;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  isolation: isolate;
+}
+.former-auth .auth-aside {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  min-height: 560px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 40px;
+  border-right: 1px solid #e8e8ec;
+  background: #fafafb;
+}
+.former-auth .auth-paths { position: absolute; inset: 0; pointer-events: none; }
+.former-auth .auth-flow { position: absolute; inset: 0; width: 100%; height: 100%; color: #0071E3; }
+.former-auth .auth-flow path {
+  opacity: .6;
+  stroke-dasharray: .3 1;
+  animation: former-auth-flow 25s linear infinite;
+}
+.former-auth .auth-aside::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent 45%, #fafafb 95%);
+}
+.former-auth .auth-brand {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 10px;
+  width: fit-content;
+  min-height: 44px;
+  color: #111;
+  text-decoration: none;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -.7px;
+}
+.former-auth .auth-brand svg { width: 26px; height: 28px; color: #0071E3; }
+.former-auth .auth-aside-copy { position: relative; z-index: 1; margin-top: auto; padding-top: 40px; max-width: 480px; }
+.former-auth .auth-aside-copy p { margin: 0 0 20px; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(30px, 3vw, 46px); line-height: 1.2; letter-spacing: -1.4px; }
+.former-auth .auth-aside-copy em { font-weight: 400; }
+.former-auth .auth-aside-copy>span { color: #6e6e73; font-size: 13px; line-height: 1.8; }
+.former-auth .auth-main {
+  position: relative;
+  min-width: 0;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 108px 48px 64px;
+  background: radial-gradient(ellipse at 100% 0%, #11111106, transparent 65%);
+}
+.former-auth .auth-home { position: absolute; top: 28px; left: 28px; display: inline-flex; align-items: center; gap: 5px; min-height: 44px; padding: 0 10px; border-radius: 8px; color: #515154; font-size: 13px; text-decoration: none; transition: background .2s, color .2s; }
+.former-auth .auth-home:hover { background: #f5f5f7; color: #111; }
+.former-auth .auth-panel { position: relative; width: 100%; max-width: 384px; margin: auto; }
+.former-auth .auth-mobile-brand { display: none; }
+.former-auth .auth-heading { margin-bottom: 30px; }
+.former-auth .auth-heading h1 { margin: 0 0 12px; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(36px, 3.4vw, 48px); font-weight: 400; letter-spacing: -1.8px; line-height: 1.12; }
+.former-auth .auth-heading p { margin: 0; color: #6e6e73; font-size: 14px; line-height: 1.65; }
+.former-auth .auth-form { display: grid; gap: 20px; }
+.former-auth .auth-form input { min-height: 48px; font-size: 16px; border-radius: 8px; }
+.former-auth .auth-form label { color: #303033; font-size: 13px; }
+.former-auth .auth-form button[type='submit'] { width: 100%; min-height: 48px; margin-top: 4px; background: #111111; color: #fff; border-radius: 8px; box-shadow: none; font-size: 14px; transition: background .2s, transform .15s; }
+.former-auth .auth-form button[type='submit']:hover:not(:disabled) { background: #2A2A2A; }
+.former-auth .auth-form button[type='submit']:active:not(:disabled) { transform: translateY(1px); }
+.former-auth .auth-form button[type='submit']:disabled { background: #111111; color: #fff; opacity: .65; }
+.former-auth .auth-switch { margin-top: 26px; text-align: center; color: #6e6e73; font-size: 13px; line-height: 1.7; }
+.former-auth .auth-switch a { display: inline-flex; align-items: center; min-height: 44px; color: #0071E3; font-weight: 500; text-decoration: none; }
+.former-auth .auth-switch a:hover { color: #0066CC; text-decoration: underline; text-underline-offset: 4px; }
+.former-auth .auth-requirements { padding: 12px 14px; border: 1px solid #e8e8ec; border-radius: 8px; background: #fafafb; font-size: 12px; }
+.former-auth .auth-enter,
+.former-auth .auth-form>* {
+  animation: former-auth-enter .5s cubic-bezier(.22, 1, .36, 1) both;
+}
+.former-auth .auth-form>:nth-child(1) { animation-delay: 180ms; }
+.former-auth .auth-form>:nth-child(2) { animation-delay: 240ms; }
+.former-auth .auth-form>:nth-child(3) { animation-delay: 300ms; }
+.former-auth .auth-form>:nth-child(4) { animation-delay: 360ms; }
+.former-auth .auth-form>:nth-child(5) { animation-delay: 420ms; }
+.former-auth .auth-form>:nth-child(6) { animation-delay: 480ms; }
+@keyframes former-auth-enter { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes former-auth-flow {
+  0% { stroke-dasharray: .3 1; stroke-dashoffset: 0; }
+  50% { stroke-dasharray: .65 1; stroke-dashoffset: -1; }
+  100% { stroke-dasharray: 1 1; stroke-dashoffset: 0; }
+}
+@media (max-width: 1023px) {
+  .former-auth { grid-template-columns: minmax(0, 1fr); }
+  .former-auth .auth-aside { display: none; }
+  .former-auth .auth-flow path { animation: none; }
+  .former-auth .auth-mobile-brand { display: inline-flex; margin-bottom: 32px; }
+  .former-auth .auth-main { padding: 100px 32px 48px; }
+  .former-auth .auth-heading h1 { font-size: 40px; }
+}
+@media (max-width: 480px) {
+  .former-auth .auth-main { padding: 92px 24px 32px; }
+  .former-auth .auth-home { top: 20px; left: 14px; }
+  .former-auth .auth-heading h1 { font-size: 36px; }
+  .former-auth .auth-switch { margin-top: 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .former-auth .auth-enter, .former-auth .auth-form>*, .former-auth .auth-flow path { animation: none; }
+  .former-auth a, .former-auth button { transition: none; }
+}
