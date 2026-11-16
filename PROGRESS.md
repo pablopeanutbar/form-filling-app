@@ -1,6 +1,19 @@
 # formER — Development Progress Tracking
 
-## Current milestone: Core field identity accuracy ? 2026-11-16
+## Current milestone ? Side panel toolbar action
+
+- The toolbar icon now opens the side panel directly. The manifest declares the panel as the default path and removes the action popup. Chromium skips the temporary site-access grant for its native side-panel toggle, so the toolbar action handler opens the panel after Chrome grants activeTab. Existing permissions suffice.
+- The panel includes account approval, reconnect and disconnect controls. It detects fields while disconnected and analyzes them while connected. Tab changes or navigation clear stale review data and discard pending responses.
+- Updated the extension package references and checked JavaScript syntax and runtime paths. Chrome behavior remains for manual verification.
+
+## Previous milestone ? Chrome Side Panel
+
+- The connected popup launches a tab-specific Review form panel on Chrome 116+. Account approval, disconnect and disconnected detection remain in the launcher.
+- The panel shows actual analysis counts and status filters, with expandable groups. Suggestions can be selected and edited locally, and filling stays disabled. Review data lives in panel memory and is cleared on navigation, tab removal, account invalidation or after five minutes.
+- Updated the manifest, package allowlist and validation, popup, worker and sidepanel assets. JavaScript syntax and package references checked. Live Chrome interaction and layout remain for manual verification.
+
+
+## Previous milestone: Core field identity accuracy ? 2026-11-16
 
 - Root cause: profile persistence/validation and canonical registry lacked first/middle/last names; only fullName existed. Deterministic rules likewise lacked components, and generic personal-section name rules could select fullName. Added explicit component identities and independent final guards instead of lowering similarity thresholds. Existing profiles are not split or migrated into guessed names.
 - Added optional component storage/API fields and inputs through the existing My Information field configuration (no layout redesign). Full name can be combined from explicitly saved first/last plus optional middle; a single saved middle name can supply its initial. Multiple middle names abstain for initials.

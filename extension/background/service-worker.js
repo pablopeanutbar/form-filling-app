@@ -1,4 +1,16 @@
-import { connectionActions, trustedPopup, withConnectionLock, analyzeFields } from './connection.js';
+import { connectionActions, withConnectionLock, analyzeFields } from './connection.js';
+
+// The native toolbar toggle skips Chrome's activeTab grant. The action event
+// grants access first and supplies the user gesture needed to open the panel.
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false })
+    .catch((error) => console.error('Could not configure the review panel', error));
+});
+
+chrome.action.onClicked.addListener((tab) => {
+  chrome.sidePanel.open({ windowId: tab.windowId })
+    .catch((error) => console.error('Could not open the review panel', error));
+});
 
 /**
  * formER Background Service Worker
@@ -57,8 +69,8 @@ const handleDetectFields = async (tabId) => {
   if (!tab || !tab.url) {
     return {
       success: false,
-      error: 'TAB_NOT_FOUND',
-      message: 'Active tab could not be found or has no valid URL.'
+      error: 'PAGE_ACCESS_REQUIRED',
+      message: 'Click the formER toolbar icon on this webpage to give formER access.'
     };
   }
 
@@ -90,21 +102,36 @@ const handleDetectFields = async (tabId) => {
   });
 };
 
+function clearReviews() {
+  chrome.runtime.sendMessage({ type: 'FORMER_CLEAR_REVIEW' }).catch(() => {});
+}
+
 /**
  * Main Extension Message Listener
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (!trustedPopup(sender)) return false;
-  if (connectionActions[message.type] || message.type === 'ANALYZE_FORM') {
+  if (!message || sender.tab || sender.id !== chrome.runtime.id
+      || sender.url !== chrome.runtime.getURL('sidepanel/review.html')) return false;
+  const accountAction = Object.hasOwn(connectionActions, message.type) ? connectionActions[message.type] : null;
+  if (accountAction || message.type === 'ANALYZE_FORM') {
     withConnectionLock(async () => {
-      if (connectionActions[message.type]) return connectionActions[message.type]();
+      if (accountAction) {
+        const status = await accountAction();
+        if (status.state !== 'connected') clearReviews();
+        return status;
+      }
+      const tab = await chrome.tabs.get(message.tabId);
+      if (!tab.active || tab.windowId !== message.windowId) throw new Error('Switch back to the page you want to analyze.');
       const extracted = await handleDetectFields(message.tabId);
-      if (!extracted?.success) throw new Error('This page could not be checked. Try another webpage with a form.');
+      if (!extracted?.success) throw new Error(extracted?.message || 'This page could not be checked. Try another webpage with a form.');
       if (!extracted.fields?.length) return { ...extracted, results: [] };
       if (extracted.fields.length > 100) throw new Error('This form has more than 100 fields. Please use a smaller form or a single step.');
       return { ...extracted, ...await analyzeFields(extracted.fields) };
     }).then((data) => sendResponse({ success: true, data }))
-      .catch((error) => sendResponse({ success: false, error: error.code || 'REQUEST_FAILED', message: error.message || 'Please try again.' }));
+      .catch((error) => {
+        if (error.code === 'CONNECTION_EXPIRED') clearReviews();
+        sendResponse({ success: false, error: error.code || 'REQUEST_FAILED', message: error.message || 'Please try again.' });
+      });
     return true;
   }
   if (message.type === 'DETECT_FIELDS') {
@@ -114,7 +141,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
     }
 
-    handleDetectFields(tabId)
+    chrome.tabs.get(tabId)
+      .then((tab) => {
+        if (!tab.active || tab.windowId !== message.windowId) throw new Error('Switch back to the page you want to check.');
+        return handleDetectFields(tabId);
+      })
       .then((result) => sendResponse(result))
       .catch((err) => {
         sendResponse({

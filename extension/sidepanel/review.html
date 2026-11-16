@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Review form · formER</title>
+  <link rel="stylesheet" href="review.css">
+  <script src="review.js" type="module"></script>
+</head>
+<body>
+  <header>
+    <div class="brand"><img src="../icons/icon48.png" width="26" height="26" alt="">formER</div>
+    <h1>Review form</h1>
+    <p id="page"></p>
+    <section class="account" aria-label="formER account">
+      <strong id="account-title" role="status">Checking account?</strong>
+      <p id="account-description"></p>
+      <p id="pair-code" hidden></p>
+      <p id="account-error" role="alert"></p>
+      <div class="account-actions">
+        <button id="connect" type="button" hidden>Connect account</button>
+        <button id="disconnect" type="button" hidden>Disconnect</button>
+      </div>
+    </section>
+    <button id="analyze" class="primary" type="button" disabled>Analyze form</button>
+  </header>
+  <main>
+    <p id="notice" class="notice" role="status">Open formER from the toolbar on the page you want to review.</p>
+    <section id="review" aria-label="Form results" hidden>
+      <h2 id="total"></h2>
+      <dl id="counts" aria-label="Results by status"></dl>
+      <label for="filter">Show fields</label>
+      <select id="filter"></select>
+      <div id="groups"></div>
+    </section>
+  </main>
+  <footer>
+    <strong id="selection" aria-live="polite">0 fields selected</strong>
+    <button class="primary" type="button" disabled aria-describedby="fill-note">Fill selected fields</button>
+    <small id="fill-note">Filling is coming in a future update.</small>
+  </footer>
+</body>
+</html>

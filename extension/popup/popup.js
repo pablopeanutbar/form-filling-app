@@ -6,10 +6,11 @@ document.addEventListener('DOMContentLoaded', () => {
     'pageStatusBadge', 'pageTitle', 'pageDomain', 'introTitle', 'introDescription',
     'detectBtn', 'btnText', 'btnSpinner', 'buttonIcon', 'announcement', 'loadingPanel',
     'noticePanel', 'noticeTitle', 'noticeMessage', 'errorContainer', 'errorMessage',
-    'resultsContainer', 'resultsTitle', 'fieldsList', 'excludedNote', 'connectionTitle', 'connectionDescription',
+    'resultsContainer', 'resultsTitle', 'excludedNote', 'connectionTitle', 'connectionDescription',
     'pairingCode', 'connectionError', 'connectBtn', 'disconnectBtn'
   ].map((id) => [id, document.getElementById(id)]));
   let busy = false;
+  let reviewTabId;
   let connection = { state: 'disconnected' };
   let accountBusy = false;
   let pollTimer;
@@ -31,11 +32,10 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.disconnectBtn.hidden = !connected() && status.state !== 'pending';
     elements.disconnectBtn.textContent = status.state === 'pending' ? 'Cancel connection' : 'Disconnect';
     if (changed) {
-      elements.fieldsList.replaceChildren();
       elements.resultsContainer.hidden = true;
       if (!['unsupported', 'checking'].includes(document.body.dataset.state)) setState('ready', 'Ready to check');
     }
-    if (!busy) elements.btnText.textContent = connected() ? 'Analyze form' : 'Detect fields';
+    if (!busy) elements.btnText.textContent = connected() ? 'Review form' : 'Detect fields';
     if (status.state === 'pending') pollTimer = setTimeout(() => accountAction('CONNECTION_STATUS'), 3200);
   }
 
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function setState(state, status, buttonLabel = 'Detect fields') {
     document.body.dataset.state = state;
     elements.pageStatusBadge.textContent = status;
-    elements.btnText.textContent = connected() ? (state === 'scanning' ? 'Analyzing form…' : ['results', 'empty'].includes(state) ? 'Analyze again' : state === 'error' ? 'Try again' : 'Analyze form') : buttonLabel;
+    elements.btnText.textContent = connected() ? 'Review form' : buttonLabel;
     elements.btnSpinner.hidden = state !== 'scanning';
     elements.buttonIcon.toggleAttribute('hidden', state === 'scanning');
     elements.detectBtn.disabled = ['checking', 'scanning', 'unsupported'].includes(state);
@@ -146,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       const timer = setTimeout(() => finish({ success: false, error: 'TIMEOUT' }), connected() ? 60000 : 15000);
       try {
-        chrome.runtime.sendMessage({ type: connected() ? 'ANALYZE_FORM' : 'DETECT_FIELDS', tabId }, (response) => {
+        chrome.runtime.sendMessage({ type: 'DETECT_FIELDS', tabId }, (response) => {
           const failed = chrome.runtime.lastError;
           finish(failed ? { success: false, error: 'COMMUNICATION_ERROR' } : response?.success && response.data ? { ...response.data, success: true } : response);
         });
@@ -154,90 +154,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const fieldTypes = {
-    text: 'Text', email: 'Email', tel: 'Phone', number: 'Number', date: 'Date', url: 'Website',
-    textarea: 'Long answer', select: 'Dropdown', radio: 'Choice', checkbox: 'Checkbox'
-  };
-
-  function fieldLabel(field) {
-    const label = text(field.label) || text(field.placeholder);
-    // Avoid displaying raw identifiers supplied as a label fallback by a webpage.
-    const isIdentifier = [field.id, field.name, field.fieldId].some((value) => value && value === label)
-      && /[_\[\]{}.$]|\d{3,}/.test(label);
-    return label && !isIdentifier ? label : 'Field without a label';
-  }
-
-  function renderField(field, index) {
-    const label = fieldLabel(field);
-    const hint = text(field.placeholder);
-    const options = Array.isArray(field.options) ? field.options.map((option) => text(typeof option === 'string' ? option : option.label)).filter(Boolean).slice(0, 50) : [];
-    const hasHint = hint && hint !== label;
-    const expandable = hasHint || options.length > 0 || label.length > 80;
-    const item = node('li', 'field-item');
-    const content = expandable ? node('details') : item;
-    const row = node(expandable ? 'summary' : 'div', 'field-row');
-    const copy = node('span', 'field-copy');
-    copy.append(node('span', 'field-label', label));
-    copy.append(node('span', 'field-meta', [fieldTypes[field.type] || 'Form field', field.required ? 'Required' : ''].filter(Boolean).join(' · ')));
-    const position = node('span', 'field-index', String(index + 1).padStart(2, '0'));
-    position.setAttribute('aria-hidden', 'true');
-    row.append(position, copy);
-    content.append(row);
-    if (expandable) {
-      const details = node('div', 'field-details');
-      if (hasHint) details.append(node('h4', '', 'Hint on the page'), node('p', '', hint));
-      if (options.length) {
-        details.append(node('h4', '', 'Choices shown on the page'));
-        const list = node('ul', 'field-options');
-        options.forEach((option) => list.append(node('li', '', option)));
-        details.append(list);
-      }
-      if (!hasHint && !options.length) details.append(node('p', '', 'Full field label shown above.'));
-      content.append(details);
-      item.append(content);
-    }
-    return item;
-  }
-
   function renderResults(data) {
     const fields = data.fields;
-    elements.fieldsList.replaceChildren();
-    const groups = new Map();
-    fields.forEach((field, index) => {
-      const section = text(field.section) || 'Form fields';
-      if (!groups.has(section)) groups.set(section, []);
-      groups.get(section).push({ field, index });
-    });
-    groups.forEach((entries, label) => {
-      const group = node('section', 'field-group');
-      group.append(node('h3', '', label));
-      const list = node('ul');
-      entries.forEach(({ field, index }) => {
-        const item = renderField(field, index);
-        const result = data.results?.find((entry) => entry.fieldId === field.fieldId);
-        if (result) {
-          const statuses = { matched: 'Suggested answer', needs_review: 'Review needed', unmatched: 'No match found', unsupported: 'Not supported' };
-          const suggestion = node('div', 'suggestion');
-          const badge = node('span', 'review-status', statuses[result.status] || 'Review needed');
-          badge.dataset.state = result.status;
-          suggestion.append(badge);
-          if (result.value !== null && result.value !== undefined) suggestion.append(node('span', 'suggestion-value', String(result.displayValue ?? result.value)));
-          const explanation = result.status === 'matched' ? 'Check this answer before using it. Nothing has been filled.'
-            : result.status === 'unsupported' ? 'Please complete this field yourself.'
-            : result.status === 'unmatched' ? 'No compatible saved answer was found.'
-            : result.value === null ? 'A safe answer could not be selected. Check your saved details and the choices on the form.' : 'This suggestion is uncertain. Please check it carefully.';
-          suggestion.append(node('p', '', explanation));
-          if (result.source?.label) suggestion.append(node('div', 'suggestion-source', [result.source.label, result.source.record].filter(Boolean).join(' · ')));
-          item.append(suggestion);
-        }
-        list.append(item);
-      });
-      group.append(list);
-      elements.fieldsList.append(group);
-    });
     const countLabel = `${fields.length} ${fields.length === 1 ? 'field' : 'fields'} found`;
-    elements.resultsTitle.textContent = data.results ? `${data.results.filter((result) => result.status === 'matched').length} suggested · ${fields.length} fields` : countLabel;
-    document.querySelector('.detection-status').textContent = data.results ? 'Analysis complete' : 'Detection complete';
+    elements.resultsTitle.textContent = countLabel;
     const excluded = data.stats?.excludedCount;
     elements.excludedNote.textContent = Number.isInteger(excluded) && excluded > 0
       ? `${excluded} ${excluded === 1 ? 'control was' : 'controls were'} skipped. Hidden, sensitive, or unsupported controls aren’t listed.` : '';
@@ -249,12 +169,19 @@ document.addEventListener('DOMContentLoaded', () => {
       elements.noticeMessage.textContent = 'If the form hasn’t loaded yet, wait a moment and check again. Some forms and embedded fields aren’t supported.';
       setState('empty', 'Page checked', 'Check again');
     }
-    elements.fieldsList.scrollTop = 0;
     elements.announcement.textContent = `${countLabel}. Nothing was filled in or submitted.`;
   }
 
   elements.detectBtn.addEventListener('click', async () => {
     if (busy || accountBusy) return;
+    if (connected()) {
+      if (!Number.isInteger(reviewTabId)) return;
+      // Call open directly in the click handler to keep Chrome's user activation.
+      chrome.sidePanel.open({ tabId: reviewTabId })
+        .then(() => window.close())
+        .catch(() => showError('The review panel could not open. Reopen formER on the page and try again.'));
+      return;
+    }
     busy = true;
     elements.connectBtn.disabled = true;
     elements.disconnectBtn.disabled = true;
@@ -285,7 +212,11 @@ document.addEventListener('DOMContentLoaded', () => {
   async function initialize() {
     try {
       const tab = await currentPage();
-      if (tab) setState('ready', 'Ready to detect');
+      if (tab) {
+        await chrome.sidePanel.setOptions({ tabId: tab.id, path: `sidepanel/review.html?tab=${tab.id}`, enabled: true });
+        reviewTabId = tab.id;
+        setState('ready', connected() ? 'Ready to review' : 'Ready to detect');
+      }
     } catch { showError('We couldn’t find your active page. Open a webpage and try again.'); }
   }
   initialize();
