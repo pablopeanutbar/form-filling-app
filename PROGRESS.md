@@ -1,5 +1,18 @@
 # formER — Development Progress Tracking
 
+## Current milestone: Premium UI Sprint 2 — 2026-11-16
+
+**Status:** UI implemented; static compilation passed; manual visual and interaction verification pending.
+
+- Refined History, Account Settings, and Report in `client/src/pages/AccountPages.jsx`, reusing the existing application shell, page headings, links, button, alert, authentication context, and unsaved-change guard.
+- Added `client/src/styles/account-pages.css`, scoped to these three pages: Apple-blue accents, responsive cards and side notes, shared spacing, keyboard focus treatments, touch-friendly report accordions, and reduced-motion support. No dependencies added.
+- History explicitly explains that activity recording is unavailable. No invented entries, dates, processing results, counts, or unsupported filters are displayed. A real navigation action opens My Information.
+- Account Settings displays the authenticated email and a valid account creation month/year when supplied. It links to existing information editors and uses the existing logout flow with pending and failure/retry feedback. Privacy copy identifies currently unavailable account controls without presenting fake settings.
+- Report clearly states that reports cannot be submitted yet. Expandable issue categories provide guidance and existing navigation links; opening a topic does not submit anything or imply support has been notified. No report form collects details that cannot be sent.
+- Confirmed from the mounted server routes: history and report/feedback endpoints are absent. Password/email changes, export, account deletion, and extension connection controls remain unavailable. No backend, authentication mechanism, matching, extension, landing page, login/signup, Dashboard, My Information, or design-document changes were made.
+- Verification: bundled the affected JSX and imports with esbuild entirely in memory; CSS parsing with PostCSS passed; diff whitespace check passed. These checks verify syntax and dependency resolution, not runtime or visual acceptance. No browser automation, screenshots, full test suite, or production build was run.
+- Next step: owner manually checks the three routes on desktop/mobile, keyboard expansion/focus, real account details, and sign-out success/failure behavior. History and report integration requires a separate backend milestone; not started here.
+
 ## Shared Login / Signup design — 2026-11-16
 - Adapted the supplied MIT Hirael Login 03 reference into JavaScript JSX in `client/src/components/layout/AuthLayout.jsx`, with attribution retained. Both auth pages share the two-column layout, existing formER auth logo, animated left panel, typography, spacing, home link, and mobile layout.
 - Added scoped `AuthLayout.css`. Preserved both sets of 36 reference SVG curves and their deterministic 20–30 second flow using normalized SVG strokes and CSS animation. Entrance animations retain the 500ms easing and 60ms stagger. Decorative motion is disabled on mobile and all auth animations respect reduced motion.
@@ -15,7 +28,7 @@
 - Verification limited to source/diff inspection and JSX syntax checking. No browser automation, visual verification, or full test suite was run, as requested. Desktop/mobile layout and interactions await the owner's manual verification.
 - Authenticated application, authentication mechanism, backend, and unrelated landing sections were not modified.
 
-## Current Development Milestone
+## Previous Development Milestone
 **Premium Application UI Sprint, Part 1 — implemented; automated checks passed; browser visual acceptance pending (2026-11-16)**
 
 ### Implemented in this sprint

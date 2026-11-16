@@ -1,22 +1,175 @@
-import React from 'react';
-import { History, MessageSquare, UserRound } from 'lucide-react';
+import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  ArrowRight, ChevronDown, CircleHelp, FileQuestion, History, Info,
+  LogOut, MessageSquare, Monitor, NotebookPen, SlidersHorizontal, UserRound
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useUnsaved } from '../context/UnsavedContext.jsx';
+import { Alert } from '../components/common/Alert.jsx';
+import { Button } from '../components/common/Button.jsx';
 import { PageHeader, TextLink } from '../components/common/Page.jsx';
+import '../styles/account-pages.css';
+
+function SectionHeading({ icon: Icon, title, description }) {
+  return <div className="ap-section-heading">
+    <span className="section-icon" aria-hidden="true"><Icon size={20} strokeWidth={1.6} /></span>
+    <div><h2>{title}</h2>{description && <p>{description}</p>}</div>
+  </div>;
+}
+
+function Availability({ children }) {
+  return <span className="ap-availability"><Info size={14} aria-hidden="true" />{children}</span>;
+}
+
+function HistoryPage() {
+  return <>
+    <PageHeader eyebrow="Your activity" title="History" description="A place to look back on your form-filling activity." />
+    <div className="ap-layout">
+      <section className="app-panel ap-history" aria-labelledby="activity-title">
+        <div className="ap-card-header"><h2 id="activity-title">Recent activity</h2><Availability>Not available yet</Availability></div>
+        <div className="ap-history-empty">
+          <div className="ap-empty-art" aria-hidden="true"><History size={36} strokeWidth={1.3} /></div>
+          <h3>Your history starts here.</h3>
+          <p>Activity history isn’t available in formER yet. There are no recorded dates or results to display here.</p>
+          <Link className="app-button" to="/app/profile">Review my information<ArrowRight size={16} aria-hidden="true" /></Link>
+        </div>
+        <div className="ap-card-footnote"><Info size={16} aria-hidden="true" /><p>This page can’t confirm whether an application was submitted.</p></div>
+      </section>
+      <aside className="ap-aside">
+        <section className="ap-guide">
+          <span className="section-icon" aria-hidden="true"><NotebookPen size={21} strokeWidth={1.6} /></span>
+          <h2>A little preparation goes a long way.</h2>
+          <p>Keep the details you use most often up to date, so they’re easy to find when you need them.</p>
+          <ul className="ap-simple-list"><li>Check your contact information.</li><li>Add your latest qualifications.</li><li>Review answers before you submit.</li></ul>
+        </section>
+        <div className="ap-side-note"><h3>Looking for a confirmation?</h3><p>Check the website where you applied or the confirmation email from that service.</p></div>
+      </aside>
+    </div>
+  </>;
+}
+
+function SettingsPage() {
+  const { user, logout } = useAuth();
+  const { confirm } = useUnsaved();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const joined = user?.createdAt ? new Date(user.createdAt) : null;
+  const memberSince = joined && !Number.isNaN(joined.getTime())
+    ? joined.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }) : null;
+
+  const signOut = () => confirm(async () => {
+    setBusy(true);
+    setError('');
+    try { await logout(); }
+    catch { setError('We couldn’t sign you out. Please try again.'); }
+    finally { setBusy(false); }
+  });
+
+  return <>
+    <PageHeader eyebrow="Make yourself at home" title="Account settings" description="Your account details, saved information, and sign-in session." />
+    <div className="ap-layout">
+      <div className="ap-stack">
+        <section className="app-panel ap-settings-card">
+          <SectionHeading icon={UserRound} title="Your account" description="The account you use to sign in to formER." />
+          <dl className="ap-account-details">
+            <div><dt>Sign-in email</dt><dd>{user?.email || 'Email unavailable'}</dd></div>
+            {memberSince && <div><dt>Member since</dt><dd>{memberSince}</dd></div>}
+          </dl>
+          <p className="ap-caption">Changing your sign-in email or password isn’t available yet.</p>
+        </section>
+        <section className="app-panel ap-settings-card">
+          <SectionHeading icon={NotebookPen} title="Your saved information" description="Personal details for your applications, all in one place." />
+          <p className="ap-section-copy">Review and edit your contact details, addresses, education, and work experience in My Information.</p>
+          <TextLink to="/app/profile">Manage my information</TextLink>
+          <p className="ap-caption ap-separated">Your application contact email can be different from your sign-in email.</p>
+        </section>
+        <section className="app-panel ap-settings-card">
+          <SectionHeading icon={Monitor} title="Your session" description="Finished for now? Sign out of this browser." />
+          <div className="ap-session-action"><p>Your saved information will be here when you sign back in.</p>
+            <Button variant="secondary" icon={LogOut} isLoading={busy} onClick={signOut} aria-busy={busy}>
+              <span>{busy ? 'Signing out…' : 'Sign out'}</span>
+            </Button>
+          </div>
+          {error && <Alert className="ap-signout-error" message={error} />}
+        </section>
+      </div>
+      <aside className="ap-aside">
+        <section className="ap-guide">
+          <span className="section-icon" aria-hidden="true"><SlidersHorizontal size={21} strokeWidth={1.6} /></span>
+          <h2>Your information. Your choices.</h2>
+          <p>Choose which personal details you save in formER. Review them in My Information whenever something changes.</p>
+          <div className="ap-guide-divider" />
+          <h3>Using a shared device?</h3>
+          <p>Sign out when you’re done to help keep your saved information private.</p>
+        </section>
+        <div className="ap-side-note"><h3>About account controls</h3><p>Data export, account deletion, and extension connection controls aren’t available yet.</p></div>
+      </aside>
+    </div>
+  </>;
+}
+
+const reportTopics = [
+  {
+    id: 'answers', icon: FileQuestion, title: 'An answer looks wrong',
+    description: 'Missing details or an unexpected answer.',
+    guidance: 'Check the details saved in My Information and compare them with what the form asks for. Review every answer on the original website before submitting.',
+    to: '/app/profile', link: 'Review my information'
+  },
+  {
+    id: 'extension', icon: Monitor, title: 'A form or extension isn’t working',
+    description: 'Fields aren’t detected or filled as expected.',
+    guidance: 'The extension currently detects form fields. Connecting your account and filling saved answers aren’t available yet. You can still complete the form yourself on the original website.'
+  },
+  {
+    id: 'account', icon: UserRound, title: 'Account or saved information',
+    description: 'Trouble with your account or updating your details.',
+    guidance: 'If an update fails, check your connection and try saving again. You can review your sign-in email and sign out from Account Settings.',
+    to: '/app/settings', link: 'Open account settings'
+  },
+  {
+    id: 'other', icon: CircleHelp, title: 'Something else',
+    description: 'An unexpected message or another problem.',
+    guidance: 'Keep a note of the page you were on, what you tried, and what happened. Save any unsaved changes before reloading the page. There isn’t a way to send this information to formER yet.'
+  }
+];
+
+function ReportPage() {
+  return <>
+    <PageHeader eyebrow="When something needs attention" title="Report a problem" description="Find guidance for common issues and see what’s currently supported." />
+    <div className="ap-layout">
+      <section className="app-panel ap-report" aria-labelledby="report-title">
+        <div className="ap-report-intro">
+          <Availability>Reporting isn’t available yet</Availability>
+          <h2 id="report-title">Something not quite right?</h2>
+          <p>You can’t send a report from formER yet. In the meantime, choose a topic below for a few things you can check.</p>
+        </div>
+        <div className="ap-topics">{reportTopics.map(({ id, icon: Icon, title, description, guidance, to, link }) =>
+          <details key={id} className="ap-topic">
+            <summary><span className="section-icon" aria-hidden="true"><Icon size={20} strokeWidth={1.6} /></span>
+              <span className="ap-topic-label"><strong>{title}</strong><span>{description}</span></span>
+              <ChevronDown size={17} className="ap-topic-chevron" aria-hidden="true" />
+            </summary>
+            <div className="ap-topic-content"><p>{guidance}</p>{to && <TextLink to={to}>{link}</TextLink>}</div>
+          </details>
+        )}</div>
+        <div className="ap-card-footnote"><MessageSquare size={16} aria-hidden="true" /><p>Opening a topic doesn’t send a report or notify support.</p></div>
+      </section>
+      <aside className="ap-aside">
+        <section className="ap-guide">
+          <span className="section-icon" aria-hidden="true"><NotebookPen size={21} strokeWidth={1.6} /></span>
+          <h2>A useful note starts with the basics.</h2>
+          <p>If you’re keeping a note of an issue for yourself, include:</p>
+          <ol className="ap-note-list"><li>What you were trying to do.</li><li>What you expected to happen.</li><li>What happened instead.</li></ol>
+        </section>
+        <div className="ap-side-note"><h3>Keep personal details out</h3><p>Leave out passwords, ID numbers, and private answers. A short description of the issue is enough.</p></div>
+      </aside>
+    </div>
+  </>;
+}
 
 export function AccountPages({ page }) {
-  const { user } = useAuth();
-  if (page === 'settings') return <><PageHeader title="Account settings" description="A clear view of your account and the controls available to you." />
-    <section className="app-panel account-settings"><div className="section-title"><span className="section-icon"><UserRound size={20} /></span><h2>Your account</h2></div>
-      <dl><div><dt>Sign-in email</dt><dd>{user?.email}</dd></div>{user?.createdAt && <div><dt>Member since</dt><dd>{new Date(user.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</dd></div>}</dl>
-      <TextLink to="/app/profile/contact">Edit your application contact details</TextLink>
-      <div className="availability-note"><h3>More account controls are on the way</h3><p>Password changes, account deletion, data export, and extension connections aren’t available in the app yet. You can sign out from your account menu.</p></div>
-    </section></>;
-  const history = page === 'history';
-  const Icon = history ? History : MessageSquare;
-  return <><PageHeader title={history ? 'History' : 'Report a problem'} description={history ? 'Your form-filling activity, when it’s available.' : 'Help make formER better for your next application.'} />
-    <section className="app-panel unavailable-state"><span className="large-empty-icon"><Icon size={30} strokeWidth={1.4} /></span>
-      <span className="availability-label">Not available yet</span><h2>{history ? 'A place for your future activity.' : 'Reporting is still taking shape.'}</h2>
-      <p>{history ? 'Activity tracking hasn’t been connected yet, so there’s no history to show. For now, you can get your information ready.' : 'You can’t send a report from formER yet. Your saved information can still be reviewed and updated in My Information.'}</p>
-      <TextLink to="/app/profile">Go to My Information</TextLink>
-    </section></>;
+  return <div className="account-pages">
+    {page === 'settings' ? <SettingsPage /> : page === 'history' ? <HistoryPage /> : <ReportPage />}
+  </div>;
 }
