@@ -3,75 +3,70 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>formER</title>
+  <title>formER — Find form fields</title>
   <link rel="stylesheet" href="popup.css">
+  <script type="module" src="popup.js"></script>
 </head>
-<body>
+<body data-state="checking">
   <div class="popup-container">
-    <!-- Header -->
     <header class="popup-header">
       <div class="brand">
-        <div class="brand-logo">f</div>
-        <div class="brand-info">
-          <h1>formER</h1>
-          <span class="version">v0.1.0</span>
-        </div>
+        <!-- Same Lucide FileCheck2 mark as the website; license in ../icons/LICENSE-lucide.txt. -->
+        <svg class="brand-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4"/><path d="M14 2v4a2 2 0 0 0 2 2h4M3 15l2 2 4-4"/></svg>
+        <div><span class="brand-name">formER</span><span id="pageStatusBadge" class="context-status">Checking this page…</span></div>
       </div>
-      <div id="pageStatusBadge" class="status-badge checking">Checking...</div>
+      <a class="icon-link" data-website-path="/" target="_blank" rel="noopener noreferrer" aria-label="Open formER website in a new tab" title="Open formER website">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M10 14 21 3M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>
+      </a>
     </header>
 
-    <!-- Main Content -->
-    <main class="popup-main">
-      <div class="page-meta">
-        <div class="meta-label">Active Page:</div>
-        <div id="pageTitle" class="meta-value truncate">Loading active tab...</div>
+    <main>
+      <div class="page-context">
+        <span class="page-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a17 17 0 0 1 0 18 17 17 0 0 1 0-18"/></svg></span>
+        <div class="page-meta"><span id="pageDomain">Current page</span><p id="pageTitle">Finding your active tab…</p></div>
       </div>
 
-      <!-- Action -->
-      <button id="detectBtn" class="btn-primary" type="button">
-        <span id="btnText">Detect Form Fields</span>
-        <span id="btnSpinner" class="spinner hidden"></span>
-      </button>
+      <section class="action-area" aria-labelledby="introTitle">
+        <h1 id="introTitle">Start with the fields.</h1>
+        <p id="introDescription">Find the form fields on this page. Nothing will be filled in or submitted.</p>
+        <button id="detectBtn" class="button-primary" type="button" disabled>
+          <svg id="buttonIcon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7V4h3M17 4h3v3M20 17v3h-3M7 20H4v-3M7 9h10M7 13h6"/></svg>
+          <span id="btnSpinner" class="spinner" hidden aria-hidden="true"></span>
+          <span id="btnText">Detect fields</span>
+        </button>
+      </section>
 
-      <!-- Error State -->
-      <div id="errorContainer" class="alert alert-error hidden">
-        <div class="alert-title">Unable to Extract</div>
-        <div id="errorMessage" class="alert-message"></div>
+      <p id="announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+
+      <div id="loadingPanel" class="loading-panel" hidden aria-hidden="true">
+        <div class="loading-caption">Looking for fields on this page…</div>
+        <div class="skeleton-row"><i></i><span></span></div>
+        <div class="skeleton-row"><i></i><span></span></div>
+        <div class="skeleton-row"><i></i><span></span></div>
       </div>
 
-      <!-- Results Stats -->
-      <div id="resultsContainer" class="results-card hidden">
-        <div class="stats-row">
-          <div class="stat-box">
-            <span class="stat-number stat-supported" id="supportedCount">0</span>
-            <span class="stat-label">Supported Fields</span>
-          </div>
-          <div class="stat-box">
-            <span class="stat-number stat-excluded" id="excludedCount">0</span>
-            <span class="stat-label">Excluded / Sensitive</span>
-          </div>
-        </div>
+      <section id="noticePanel" class="notice-panel" hidden aria-labelledby="noticeTitle">
+        <span class="notice-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M9 14h6"/></svg></span>
+        <h2 id="noticeTitle"></h2><p id="noticeMessage"></p>
+      </section>
 
-        <!-- Field List Preview -->
-        <div class="fields-section">
-          <div class="fields-header">
-            <span>Detected Fields</span>
-            <button id="toggleJsonBtn" class="btn-text" type="button">Show JSON</button>
-          </div>
-          <div id="fieldsList" class="fields-list"></div>
-          <div id="jsonViewer" class="json-viewer hidden">
-            <pre><code id="jsonCode"></code></pre>
-          </div>
-        </div>
+      <div id="errorContainer" class="error-panel" role="alert" hidden>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+        <div><h2>We couldn’t check this page</h2><p id="errorMessage"></p></div>
       </div>
+
+      <section id="resultsContainer" class="results-panel" hidden aria-labelledby="resultsTitle">
+        <div class="results-heading"><h2 id="resultsTitle">Detected fields</h2><span class="detection-status">Detection complete</span></div>
+        <div id="fieldsList" class="fields-list" tabindex="0" role="region" aria-label="Detected fields, scroll to see more"></div>
+      </section>
+      <p id="excludedNote" class="excluded-note" hidden></p>
     </main>
 
-    <!-- Footer -->
-    <footer class="popup-footer">
-      <span>AI/ML Form Understanding</span>
+    <footer class="account-panel">
+      <div class="account-heading"><span class="connection-dot" aria-hidden="true"></span><h2>Account not connected</h2></div>
+      <p>Account connection and autofill aren’t available yet. You can manage your saved details on the website.</p>
+      <a class="text-link" data-website-path="/app" target="_blank" rel="noopener noreferrer">Open formER <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg><span class="sr-only"> in a new tab</span></a>
     </footer>
   </div>
-
-  <script src="popup.js"></script>
 </body>
 </html>

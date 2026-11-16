@@ -1,6 +1,18 @@
 # formER — Development Progress Tracking
 
-## Current milestone: Premium UI Sprint 2 — 2026-11-16
+## Current milestone: Premium Chrome Extension UI — 2026-11-16
+
+**Status:** Popup presentation implemented; syntax and focused in-memory DOM checks passed; Chrome visual and interaction acceptance pending.
+
+- Reworked `extension/popup/popup.html`, `popup.css`, and `popup.js` into a compact 392px popup with the website's formER/FileCheck2 branding, Inter/system font stack, Apple-blue actions, soft surfaces, keyboard focus styles, and reduced-motion-aware CSS transitions. Added the reused icon license at `extension/icons/LICENSE-lucide.txt`. No dependencies, remote assets, or animation libraries added.
+- Real UI states cover initial page lookup, readiness, pending detection, successful detection, no supported fields, restricted pages, and failure/retry. Pending feedback follows the actual operation with a 15-second timeout; no artificial delays. Known protected pages disable detection. Other page-access failures receive customer-friendly guidance rather than raw errors.
+- Preserved the existing `DETECT_FIELDS` request and response contract. Re-query the current tab before each user-initiated attempt. Extraction, service-worker messaging, sensitive-field filtering, Manifest V3, and permissions are unchanged.
+- Results show actual field counts and page-section groups, readable labels/types, required indicators, and optional expandable hints/choices. Long labels wrap or expand; long lists scroll. Removed normal-interface JSON, raw IDs/names, diagnostic payloads, and developer terminology. Page-provided content is rendered as text, never HTML.
+- Account remains explicitly disconnected. Website links point to the owner-approved `http://localhost:5173` origin via `extension/config.js`; the local website must be running. That origin needs updating before publication. No account authorization, backend calls, matching, filling, submission, or simulated user data was added. Reserved semantic CSS styles for future validated review states remain unused and create no fake controls.
+- Verification: `node --check` passed for both changed JavaScript files; PostCSS parsed the stylesheet; diff whitespace checks passed. Focused JSDOM checks (in memory, no browser) passed for ready/loading/results/empty/error-retry states, protected pages, website navigation targets, safe rendering of page-supplied text, result grouping/options, and the unchanged detection request. These do not verify Chrome permissions, visual layout, actual extraction, or real website navigation.
+- No browser automation, screenshots, full test suite, backend changes, or approved website changes. Next step is owner acceptance in Chrome: reload the unpacked extension, inspect supported/restricted pages and empty/results states, expand fields using keyboard, and open the locally running website. Secure authorization and known matching-safety defects remain separate prerequisites for any future autofill milestone.
+
+## Previous milestone: Premium UI Sprint 2 — 2026-11-16
 
 **Status:** UI implemented; static compilation passed; manual visual and interaction verification pending.
 
