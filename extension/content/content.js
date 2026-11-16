@@ -337,7 +337,7 @@
     return options;
   };
 
-  const extractFormFields = (root = document) => {
+  const extractFormFields = (root = document, targets) => {
     const rawControls = Array.from(root.querySelectorAll('input, select, textarea'));
     const totalEvaluated = rawControls.length;
 
@@ -407,6 +407,7 @@
       if (el.hasAttribute('step')) constraints.step = el.getAttribute('step');
       if (el.hasAttribute('pattern')) constraints.pattern = el.getAttribute('pattern');
 
+      if (targets) targets.set(fieldId, { elements: [el] });
       fields.push({
         fieldId,
         id,
@@ -450,6 +451,7 @@
 
       const isRequired = radioElements.some((r) => r.required || r.getAttribute('aria-required') === 'true');
 
+      if (targets) targets.set(fieldId, { elements: radioElements });
       fields.push({
         fieldId,
         id,
@@ -464,6 +466,9 @@
       });
     }
 
+    if (targets) {
+      for (const field of fields) targets.get(field.fieldId).field = field;
+    }
     return {
       success: true,
       url: window.location.href,
@@ -480,10 +485,52 @@
   // ==========================================
   // Message Listener
   // ==========================================
+  let analysis;
+  function invalidateAnalysis() { analysis = undefined; }
+  window.addEventListener('pagehide', invalidateAnalysis);
+  window.addEventListener('popstate', invalidateAnalysis);
+  window.addEventListener('hashchange', invalidateAnalysis);
+
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (sender.id !== chrome.runtime.id || sender.tab || sender.url !== chrome.runtime.getURL('background/service-worker.js')) return false;
+    if (request.type === 'FILL_FIELDS' || request.type === 'CHECK_REVIEW') {
+      const snapshot = analysis;
+      if (!snapshot || snapshot.id !== request.analysisId || snapshot.url !== location.href
+          || Date.now() >= snapshot.expiresAt || snapshot.filling || document.visibilityState !== 'visible') {
+        sendResponse({ success: false, message: 'This review is stale. Analyze the current form again.' });
+        return false;
+      }
+      if (request.type === 'CHECK_REVIEW') {
+        sendResponse({ success: true });
+        return false;
+      }
+      snapshot.filling = true;
+      const run = async () => {
+        const current = new Map();
+        extractFormFields(document, current);
+        const results = await globalThis.formERWriter.apply(snapshot.targets, current, request.proposals, {
+          labelFor: (el) => [resolveLabel(el), resolveSection(el)].join(' | '),
+          excluded: isSensitiveOrExcluded,
+          stillCurrent: () => analysis === snapshot && location.href === snapshot.url && document.visibilityState === 'visible'
+        });
+        return { success: true, results };
+      };
+      run().finally(() => { snapshot.filling = false; }).then(sendResponse)
+        .catch(() => sendResponse({ success: false, message: 'Filling could not be completed. Check the page before trying again.' }));
+      return true;
+    }
     if (request.type === 'EXTRACT_FIELDS') {
       try {
-        const result = extractFormFields(document);
+        const targets = request.analysisId ? new Map() : undefined;
+        if (targets) invalidateAnalysis();
+        const result = extractFormFields(document, targets);
+        if (targets) {
+          for (const target of targets.values()) {
+            target.forms = target.elements.map((el) => el.form);
+            target.signature = globalThis.formERWriter.signature(target.elements, (el) => [resolveLabel(el), resolveSection(el)].join(' | '));
+          }
+          analysis = { id: request.analysisId, targets, url: location.href, expiresAt: Date.now() + 5 * 60 * 1000 };
+        }
         sendResponse(result);
       } catch (err) {
         sendResponse({

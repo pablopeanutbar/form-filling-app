@@ -1,5 +1,5 @@
 const $ = (id) => document.getElementById(id);
-const lifetime = 5 * 60 * 1000;
+const fillableTypes = new Set(['text', 'email', 'tel', 'number', 'date', 'textarea', 'select', 'radio']);
 const statuses = [
   ['matched', 'Matched'],
   ['needs_review', 'Needs review'],
@@ -8,6 +8,7 @@ const statuses = [
 ];
 
 let session;
+let filling = false;
 let generation = 0;
 let expiry;
 let boundTab;
@@ -32,6 +33,11 @@ function clearReview(message) {
   $('filter').replaceChildren();
   $('counts').replaceChildren();
   $('selection').textContent = '0 fields selected';
+  $('fill-results').replaceChildren();
+  $('fill').disabled = true;
+  $('clear-selection').disabled = true;
+  $('fill-all').disabled = true;
+  $('fill-all').textContent = 'Fill all matched';
   $('notice').textContent = message;
   $('analyze').disabled = !boundTab;
   $('analyze').removeAttribute('aria-busy');
@@ -40,6 +46,20 @@ function clearReview(message) {
 function updateSelection() {
   const count = session.entries.filter(({ selected }) => selected).length;
   $('selection').textContent = `${count} ${count === 1 ? 'field' : 'fields'} selected`;
+  const matches = eligibleMatches();
+  const selectedMatches = matches.filter((entry) => entry.selected).length;
+  const disabled = !session.id || filling || account.state !== 'connected';
+  $('fill').disabled = !count || disabled;
+  $('fill-all').disabled = !matches.length || disabled;
+  $('fill-all').textContent = matches.length ? `Fill all matched (${matches.length})` : 'Fill all matched';
+  const checkbox = $('select-all');
+  if (checkbox) {
+    checkbox.checked = matches.length > 0 && selectedMatches === matches.length;
+    checkbox.indeterminate = selectedMatches > 0 && selectedMatches < matches.length;
+    checkbox.disabled = disabled || !matches.length;
+  }
+  const clear = $('clear-selection');
+  if (clear) clear.disabled = disabled || !count;
 }
 
 function explanation(result) {
@@ -61,14 +81,15 @@ function renderCard(entry) {
   const label = field.label || 'Field without a label';
   const card = element('article', null, 'card');
   card.append(element('h3', label));
-  if (result.value != null) {
+  if (entry.filled) card.append(element('p', 'Filled', 'filled-label'));
+  if (fillableTypes.has(field.type) && result.value != null && ['matched', 'needs_review'].includes(result.status)) {
     const answer = element('p', entry.edited ?? String(result.displayValue ?? result.value), 'answer');
     const select = element('input');
     select.type = 'checkbox';
     select.checked = entry.selected;
     select.setAttribute('aria-label', `Select suggestion for ${label}`);
     const choice = element('label', null, 'choice');
-    choice.append(select, 'Select suggestion');
+    choice.append(select, result.status === 'needs_review' ? 'Approve this answer' : 'Select suggestion');
     select.addEventListener('change', () => {
       entry.selected = select.checked;
       updateSelection();
@@ -80,13 +101,21 @@ function renderCard(entry) {
     input.setAttribute('aria-label', `Edit suggestion for ${label}`);
     input.addEventListener('input', () => {
       entry.edited = input.value;
+      entry.filled = false;
+      card.querySelector('.filled-label')?.remove();
       answer.textContent = input.value;
       select.disabled = !input.value.trim();
       if (select.disabled) entry.selected = select.checked = false;
       updateSelection();
     });
     select.disabled = entry.edited != null && !entry.edited.trim();
-    editor.append(element('summary', 'Edit locally'), input);
+    const overwrite = element('input');
+    overwrite.type = 'checkbox';
+    overwrite.checked = Boolean(entry.overwrite);
+    overwrite.addEventListener('change', () => { entry.overwrite = overwrite.checked; });
+    const overwriteLabel = element('label', null, 'choice');
+    overwriteLabel.append(overwrite, 'Replace an existing answer in this field');
+    editor.append(element('summary', 'Edit or approve replacement'), input, overwriteLabel);
     card.append(answer, choice, editor);
   }
   const detail = explanation(result);
@@ -104,12 +133,14 @@ function renderGroups() {
     const group = element('details');
     group.open = filter !== 'all' || key === 'matched' || key === 'needs_review';
     group.append(element('summary', `${label} (${entries.length})`));
+    if (key === 'matched') group.append(bulkSelection());
     const list = element('div', null, 'cards');
     for (const entry of entries) list.append(renderCard(entry));
     group.append(list);
     $('groups').append(group);
   }
   if (!$('groups').childElementCount) $('groups').append(element('p', 'No fields in this category.', 'notice'));
+  updateSelection();
 }
 
 function showResults(data) {
@@ -118,7 +149,7 @@ function showResults(data) {
     const result = results.get(field.fieldId);
     return result ? [{ field, result, selected: false }] : [];
   });
-  session = { entries };
+  session = { id: data.analysisId, entries };
   $('total').textContent = `${data.fields.length} ${data.fields.length === 1 ? 'field' : 'fields'} detected`;
   const options = [['all', 'All fields', data.fields.length], ...statuses.map(([key, label]) =>
     [key, label, entries.filter(({ result }) => result.status === key).length])];
@@ -135,11 +166,13 @@ function showResults(data) {
   $('review').hidden = false;
   renderGroups();
   updateSelection();
-  expiry = setTimeout(() => clearReview('This review expired. Analyze the form again for fresh suggestions.'), lifetime);
+  if (data.expiresAt) {
+    expiry = setTimeout(() => clearReview('This review expired. Analyze the form again for fresh suggestions.'), Math.max(0, data.expiresAt - Date.now()));
+  }
 }
 
 async function analyze() {
-  if (!boundTab) return;
+  if (!boundTab || filling) return;
   const tabId = boundTab.id;
   const connected = account.state === 'connected';
   clearReview('Checking fields and looking for saved answers…');
@@ -166,12 +199,119 @@ async function analyze() {
   } finally {
     clearTimeout(timer);
     if (request === generation) {
-      $('analyze').disabled = false;
+      $('analyze').disabled = filling;
       $('analyze').removeAttribute('aria-busy');
     }
   }
 }
 
+
+function fillValue(entry) {
+  if (entry.edited === undefined || entry.edited === String(entry.result.displayValue ?? entry.result.value)) {
+    return String(entry.result.value);
+  }
+  if (!['select', 'radio'].includes(entry.field.type)) return entry.edited;
+  const choices = (entry.field.options || []).filter((choice) => !choice.disabled
+    && (choice.label === entry.edited || choice.value === entry.edited));
+  return choices.length === 1 ? choices[0].value : null;
+}
+
+function eligibleMatches() {
+  return session.entries.filter((entry) => {
+    if (entry.result.status !== 'matched' || entry.result.value == null || entry.filled
+        || !fillableTypes.has(entry.field.type) || entry.field.optionsTruncated || entry.field.constraints?.multiple) return false;
+    const value = fillValue(entry);
+    return value != null && !!value.trim() && value.length <= 2000;
+  });
+}
+
+function bulkSelection() {
+  const row = element('div', null, 'bulk-selection');
+  const checkbox = element('input');
+  checkbox.type = 'checkbox';
+  checkbox.id = 'select-all';
+  const label = element('label', null, 'choice');
+  label.append(checkbox, 'Select all eligible matches');
+  checkbox.addEventListener('change', () => {
+    for (const entry of eligibleMatches()) entry.selected = checkbox.checked;
+    renderGroups();
+    $('select-all')?.focus();
+  });
+  row.append(label);
+  return row;
+}
+
+function showFillResults(results, selected) {
+  const counts = { filled: 0, skipped: 0, failed: 0 };
+  const labels = new Map(selected.map(({ field }) => [field.fieldId, field.label || 'Unlabeled field']));
+  const details = element('ul');
+  for (const result of results) {
+    counts[result.status]++;
+    if (result.status !== 'filled') details.append(element('li', `${labels.get(result.fieldId)}: ${result.reason}`));
+  }
+  $('fill-results').replaceChildren(element('p', `${counts.filled} filled ? ${counts.skipped} skipped ? ${counts.failed} failed`));
+  if (details.childElementCount) $('fill-results').append(details);
+}
+
+async function fillSelected(mode = 'selected') {
+  if (filling || !boundTab || !session?.id || account.state !== 'connected') return;
+  const selected = mode === 'matched' ? eligibleMatches() : session.entries.filter(({ selected }) => selected);
+  if (!selected.length) return;
+  const proposals = [];
+  const skipped = [];
+  for (const entry of selected) {
+    const value = fillValue(entry);
+    if (value == null || !value.trim() || value.length > 2000) {
+      skipped.push({ fieldId: entry.field.fieldId, status: 'skipped', reason: 'Enter a valid answer or an exact available choice.' });
+    } else {
+      proposals.push({ fieldId: entry.field.fieldId, value, overwrite: Boolean(entry.overwrite), approved: true });
+    }
+  }
+  if (!proposals.length) {
+    showFillResults(skipped, selected);
+    return;
+  }
+  const request = generation;
+  filling = true;
+  $('analyze').disabled = true;
+  $('groups').inert = true;
+  $('filter').disabled = true;
+  updateSelection();
+  $('fill-results').textContent = 'Applying selected answers?';
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: 'FILL_FORM', mode, tabId: boundTab.id, windowId, analysisId: session.id, proposals
+    });
+    if (request !== generation) return;
+    if (!response?.success) throw new Error(response?.message || 'Check the page before trying again.');
+    showFillResults([...response.data, ...skipped], selected);
+    const filled = new Set(response.data.filter((result) => result.status === 'filled').map((result) => result.fieldId));
+    for (const entry of selected) {
+      if (filled.has(entry.field.fieldId)) {
+        entry.filled = true;
+        entry.selected = false;
+        entry.overwrite = false;
+      }
+    }
+    renderGroups();
+  } catch (error) {
+    if (request === generation) $('fill-results').textContent = error.message || 'Check the page before trying again.';
+  } finally {
+    filling = false;
+    $('analyze').disabled = !boundTab;
+    $('groups').inert = false;
+    $('filter').disabled = false;
+    if (session) updateSelection();
+  }
+}
+
+$('clear-selection').addEventListener('click', () => {
+  if (!session || filling) return;
+  for (const entry of session.entries) entry.selected = false;
+  renderGroups();
+});
+$('fill').addEventListener('click', () => fillSelected());
+$('fill-all').addEventListener('click', () => fillSelected('matched'));
 
 function renderAccount(status) {
   account = status;

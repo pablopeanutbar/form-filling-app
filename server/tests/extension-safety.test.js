@@ -76,10 +76,10 @@ test('Both extraction implementations preserve constraints and choices without e
   try {
     const moduleResult = extractFormFields(dom.window.document);
     let listener;
-    dom.window.chrome = { runtime: { onMessage: { addListener: (fn) => { listener = fn; } } } };
+    dom.window.chrome = { runtime: { id: 'former-test', getURL: (path) => 'chrome-extension://former-test/' + path, onMessage: { addListener: (fn) => { listener = fn; } } } };
     dom.window.eval(readFileSync(new URL('../../extension/content/content.js', import.meta.url), 'utf8'));
     let injected;
-    listener({ type: 'EXTRACT_FIELDS' }, {}, (data) => { injected = JSON.parse(JSON.stringify(data)); });
+    listener({ type: 'EXTRACT_FIELDS' }, { id: 'former-test', url: 'chrome-extension://former-test/background/service-worker.js' }, (data) => { injected = JSON.parse(JSON.stringify(data)); });
     for (const result of [moduleResult, injected]) {
       assert.equal(result.fields.length, 3);
       const parsed = matchRequestSchema.parse({ fields: result.fields });

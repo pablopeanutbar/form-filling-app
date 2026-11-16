@@ -3,6 +3,7 @@
   "config.js",
   "background/service-worker.js",
   "background/connection.js",
+  "content/fill.js",
   "content/content.js",
   "sidepanel/review.html",
   "sidepanel/review.css",

@@ -1,6 +1,22 @@
 # formER — Development Progress Tracking
 
-## Current milestone ? Side panel toolbar action
+## Current milestone ? Reliable reviews and bulk autofill
+
+- Fixed two stale review paths: worker suspension lost the in-memory approval metadata, and detection-only extraction invalidated the page review. The worker now keeps review IDs, document bindings, expiry, and eligible field status metadata in trusted extension session storage. It verifies the original page snapshot before returning analysis. Detection leaves that snapshot intact.
+- The same expiry applies in the worker and panel. The fill path still rechecks the account, active tab and document and verifies target identity, live constraints, overwrite approval, and written values.
+- Added Fill all matched, Select all eligible matches, and Clear selection. Bulk filling excludes needs-review suggestions even when individually approved for the separate manual action. Successful fields show a Filled label and leave the selection. Skipped and failed fields retain their selection and show reasons.
+- Verified 15 focused tests with `node --test server/tests/extension-fill.test.js server/tests/extension-safety.test.js`. Covers first-review use after simulated worker restart and status/detection requests, document and expiry rejection, account invalidation, bulk selection and explicit approval. Live RoboForm testing remains manual.
+
+
+## Previous milestone ? Phase 3 approved autofill
+
+- The side panel fills selected and explicitly approved suggestions. Local edits are used when compatible, and a separate per-field choice authorizes replacing an existing answer. Feedback counts verified writes, skipped fields and failures.
+- The worker rechecks account status and binds a review to the panel document, active tab, original webpage document and a five-minute session. The content script checks the captured element references, current labels, types, constraints and choices before writing. The writer uses native setters and input/change events, then reads values back. It never invokes submit or clicks page controls.
+- Supported destinations include native text, email, telephone, number, date, textarea, single-select and radio groups. Checkbox suggestions remain unavailable under the existing matcher. Protected fields, custom widgets and unsafe or changed destinations are skipped. The verified readback is immediate and cannot guarantee that a site will retain the value later.
+- Updated extension content, worker, panel controls and packaging inputs. Verified with `node --test server/tests/extension-fill.test.js server/tests/extension-safety.test.js` (14 passed). Tests cover native DOM values, a React-controlled text input, changes and removal, protected controls, overwrite approval, stale reviews, account invalidation and no automatic submission. Live Chrome verification remains manual.
+
+
+## Previous milestone ? Side panel toolbar action
 
 - The toolbar icon now opens the side panel directly. The manifest declares the panel as the default path and removes the action popup. Chromium skips the temporary site-access grant for its native side-panel toggle, so the toolbar action handler opens the panel after Chrome grants activeTab. Existing permissions suffice.
 - The panel includes account approval, reconnect and disconnect controls. It detects fields while disconnected and analyzes them while connected. Tab changes or navigation clear stale review data and discard pending responses.

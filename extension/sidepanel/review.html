@@ -35,9 +35,14 @@
     </section>
   </main>
   <footer>
-    <strong id="selection" aria-live="polite">0 fields selected</strong>
-    <button class="primary" type="button" disabled aria-describedby="fill-note">Fill selected fields</button>
-    <small id="fill-note">Filling is coming in a future update.</small>
+    <div class="bulk-selection">
+      <strong id="selection" aria-live="polite">0 fields selected</strong>
+      <button id="clear-selection" class="secondary" type="button" disabled>Clear selection</button>
+    </div>
+    <div id="fill-results" role="status" aria-live="polite"></div>
+    <button id="fill-all" class="primary" type="button" disabled>Fill all matched</button>
+    <button id="fill" class="secondary" type="button" disabled aria-describedby="fill-note">Fill selected fields</button>
+    <small id="fill-note">Review the page after filling. You submit the form yourself.</small>
   </footer>
 </body>
 </html>

@@ -39,31 +39,18 @@ const isRestrictedUrl = (url) => {
  * Ensure content script is injected in the target tab
  */
 const ensureContentScriptInjected = async (tabId) => {
-  try {
-    // Attempt pinging content script
-    const response = await chrome.tabs.sendMessage(tabId, { type: 'PING' });
-    if (response && response.status === 'PONG') {
-      return true;
-    }
-  } catch {
-    // Script not present; inject it via chrome.scripting
-  }
-
-  try {
-    await chrome.scripting.executeScript({
-      target: { tabId },
-      files: ['content/content.js']
-    });
-    return true;
-  } catch (err) {
-    throw new Error(`Failed to inject content script: ${err.message}`);
-  }
+  const [injection] = await chrome.scripting.executeScript({
+    target: { tabId },
+    files: ['content/fill.js', 'content/content.js']
+  });
+  if (!injection?.documentId) throw new Error('The current form could not be opened.');
+  return injection.documentId;
 };
 
 /**
  * Handle field extraction request for a specific tab
  */
-const handleDetectFields = async (tabId) => {
+const handleDetectFields = async (tabId, analysisId) => {
   // 1. Retrieve tab information
   const tab = await chrome.tabs.get(tabId);
   if (!tab || !tab.url) {
@@ -84,11 +71,11 @@ const handleDetectFields = async (tabId) => {
   }
 
   // 3. Ensure content script is available
-  await ensureContentScriptInjected(tabId);
+  const documentId = await ensureContentScriptInjected(tabId);
 
   // 4. Send EXTRACT_FIELDS message to content script
   return new Promise((resolve) => {
-    chrome.tabs.sendMessage(tabId, { type: 'EXTRACT_FIELDS' }, (response) => {
+    chrome.tabs.sendMessage(tabId, { type: 'EXTRACT_FIELDS', analysisId }, { documentId }, (response) => {
       if (chrome.runtime.lastError) {
         resolve({
           success: false,
@@ -97,13 +84,56 @@ const handleDetectFields = async (tabId) => {
         });
         return;
       }
-      resolve(response || { success: false, error: 'EMPTY_RESPONSE', message: 'No response from content script.' });
+      resolve(response ? { ...response, documentId } : { success: false, error: 'EMPTY_RESPONSE', message: 'No response from content script.' });
     });
   });
 };
 
-function clearReviews() {
+// Keep only review identity and eligible field IDs across worker suspension.
+const reviewPrefix = 'former-review:';
+const reviewKey = (tabId) => reviewPrefix + tabId;
+chrome.tabs.onRemoved.addListener((tabId) => {
+  withConnectionLock(() => chrome.storage.session.remove(reviewKey(tabId))).catch(() => {});
+});
+
+async function clearReviews() {
+  const entries = await chrome.storage.session.get(null);
+  const keys = Object.keys(entries).filter((key) => key.startsWith(reviewPrefix));
+  if (keys.length) await chrome.storage.session.remove(keys);
   chrome.runtime.sendMessage({ type: 'FORMER_CLEAR_REVIEW' }).catch(() => {});
+}
+
+async function fillReview(tab, message, sender) {
+  const key = reviewKey(tab.id);
+  const review = (await chrome.storage.session.get(key))[key];
+  const stale = () => new Error('This review is stale. Analyze the current form again.');
+  if (!review?.allowed || review.id !== message.analysisId || review.panelId !== sender.documentId
+      || review.windowId !== tab.windowId || review.url !== tab.url || Date.now() >= review.expiresAt) throw stale();
+  const { proposals } = message;
+  const ids = new Set();
+  const allowed = new Map(review.allowed);
+  if (!Array.isArray(proposals) || !proposals.length || proposals.length > 100) throw new Error('Select the answers you want to fill.');
+  for (const { fieldId, value, overwrite, approved } of proposals) {
+    if (!allowed.has(fieldId) || (message.mode === 'matched' && allowed.get(fieldId) !== 'matched') || ids.has(fieldId) || approved !== true || typeof overwrite !== 'boolean'
+        || typeof value !== 'string' || !value.trim() || value.length > 2000) throw new Error('Check the selected answers and try again.');
+    ids.add(fieldId);
+  }
+  const status = await connectionActions.CONNECTION_STATUS();
+  if (status.state !== 'connected') {
+    await clearReviews();
+    throw new Error('Reconnect your account before filling.');
+  }
+  const current = await chrome.tabs.get(tab.id);
+  if (!current.active || current.windowId !== tab.windowId
+      || current.url !== review.url || Date.now() >= review.expiresAt) throw stale();
+  let response;
+  try {
+    response = await chrome.tabs.sendMessage(tab.id, { type: 'FILL_FIELDS', analysisId: review.id, proposals }, { documentId: review.documentId });
+  } catch {
+    throw stale();
+  }
+  if (!response?.success) throw new Error(response?.message || 'Check the page before trying again.');
+  return response.results;
 }
 
 /**
@@ -113,23 +143,41 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message || sender.tab || sender.id !== chrome.runtime.id
       || sender.url !== chrome.runtime.getURL('sidepanel/review.html')) return false;
   const accountAction = Object.hasOwn(connectionActions, message.type) ? connectionActions[message.type] : null;
-  if (accountAction || message.type === 'ANALYZE_FORM') {
+  if (accountAction || ['ANALYZE_FORM', 'FILL_FORM'].includes(message.type)) {
     withConnectionLock(async () => {
       if (accountAction) {
         const status = await accountAction();
-        if (status.state !== 'connected') clearReviews();
+        if (status.state !== 'connected') await clearReviews();
         return status;
       }
       const tab = await chrome.tabs.get(message.tabId);
       if (!tab.active || tab.windowId !== message.windowId) throw new Error('Switch back to the page you want to analyze.');
-      const extracted = await handleDetectFields(message.tabId);
+      if (message.type === 'FILL_FORM') return fillReview(tab, message, sender);
+      const review = {
+        id: crypto.randomUUID(), panelId: sender.documentId, windowId: tab.windowId,
+        url: tab.url, expiresAt: Date.now() + 5 * 60 * 1000
+      };
+      await chrome.storage.session.remove(reviewKey(tab.id));
+      const extracted = await handleDetectFields(tab.id, review.id);
       if (!extracted?.success) throw new Error(extracted?.message || 'This page could not be checked. Try another webpage with a form.');
       if (!extracted.fields?.length) return { ...extracted, results: [] };
       if (extracted.fields.length > 100) throw new Error('This form has more than 100 fields. Please use a smaller form or a single step.');
-      return { ...extracted, ...await analyzeFields(extracted.fields) };
+      const matched = await analyzeFields(extracted.fields).catch(async (error) => {
+        if (error.code === 'CONNECTION_EXPIRED') await clearReviews();
+        throw error;
+      });
+      const current = await chrome.tabs.get(tab.id);
+      if (!current.active || current.url !== review.url) throw new Error('The page changed. Analyze the form again.');
+      review.documentId = extracted.documentId;
+      review.allowed = matched.results.filter((result) =>
+        ['matched', 'needs_review'].includes(result.status) && result.value != null)
+        .map(({ fieldId, status }) => [fieldId, status]);
+      const live = await chrome.tabs.sendMessage(tab.id, { type: 'CHECK_REVIEW', analysisId: review.id }, { documentId: review.documentId });
+      if (!live?.success) throw new Error('The page changed. Analyze the form again.');
+      await chrome.storage.session.set({ [reviewKey(tab.id)]: review });
+      return { fields: extracted.fields, ...matched, analysisId: review.id, expiresAt: review.expiresAt };
     }).then((data) => sendResponse({ success: true, data }))
       .catch((error) => {
-        if (error.code === 'CONNECTION_EXPIRED') clearReviews();
         sendResponse({ success: false, error: error.code || 'REQUEST_FAILED', message: error.message || 'Please try again.' });
       });
     return true;
@@ -141,8 +189,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
     }
 
-    chrome.tabs.get(tabId)
-      .then((tab) => {
+    withConnectionLock(async () => {
+        const tab = await chrome.tabs.get(tabId);
         if (!tab.active || tab.windowId !== message.windowId) throw new Error('Switch back to the page you want to check.');
         return handleDetectFields(tabId);
       })

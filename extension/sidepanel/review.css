@@ -56,3 +56,9 @@ summary { padding: 6px 1px; font-weight: 650; }
 .account-actions button + button:not([hidden]) { margin-inline-start: 10px; }
 #pair-code { font: 650 16px/1.5 monospace; color: inherit; }
 #account-error { color: #a32920; }
+
+.secondary { padding: 8px 14px; border: 1px solid var(--line); background: white; color: #0063c8; border-radius: 10px; font-weight: 650; }
+.secondary:disabled { color: var(--muted); cursor: default; }
+.bulk-selection { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0 0 8px; }
+.bulk-selection .choice { margin: 0; }
+.filled-label { color: #286849; font-size: 12px; }
