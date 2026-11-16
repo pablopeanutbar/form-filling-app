@@ -4,8 +4,8 @@ import { AlertCircle, ArrowRight } from 'lucide-react';
 import { useProfile } from '../../context/ProfileContext.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
 
-export function PageHeader({ eyebrow, title, description, children }) {
-  return <header className="page-heading"><div>{eyebrow && <p className="eyebrow">{eyebrow}</p>}<h1>{title}</h1><p>{description}</p></div>{children}</header>;
+export function PageHeader({ title, children }) {
+  return <header className="page-heading"><h1>{title}</h1>{children}</header>;
 }
 export function ProfileGate({ children }) {
   const { loading, error, reload } = useProfile();

@@ -18,7 +18,7 @@ const sections = [
 export function MyInformation() {
   const { section = 'personal' } = useParams();
   if (!sections.some(([key]) => key === section)) return <Navigate to="/app/profile" replace />;
-  return <><PageHeader eyebrow="A little preparation goes a long way" title="My Information" description="Your details, organized for wherever life takes you next." />
+  return <><PageHeader title="My Information" />
     <div className="profile-layout"><aside className="profile-section-sidebar"><nav aria-label="Information sections">{sections.map(([key, label, Icon]) =>
       <NavLink key={key} to={`/app/profile/${key}`} className={() => section === key ? 'active' : ''}><Icon size={17} strokeWidth={1.7} /><span>{label}</span></NavLink>)}</nav>
       <div className="profile-tip"><Check size={18} /><p>Start with what you know.<br />You can fill in the rest later.</p></div></aside>

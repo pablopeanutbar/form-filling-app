@@ -2,9 +2,17 @@
 
 ## Workspace cleanup
 
+- Account Settings now uses a full-width stack with a dedicated Extension connections card linking to the existing management page. Removed the settings sidebar and saved-information card.
+
+- Simplified workspace headers to page titles, removed the footer tagline, and trimmed the dashboard profile callout.
+
 - Made Recent activity full width and removed the History side notes. Removed the desktop workspace top bar and the signed-in sidebar link to the landing page. Kept the mobile navigation header.
 
 ## Dashboard cleanup
+
+- Moved extension download to the top-right workspace header and made the dashboard a single full-width column.
+
+- Kept the dashboard extension card the same height as the profile card, restored its narrower column, and made Download & install the primary action. Removed repeated autofill and setup copy. The dashboard still stacks on narrow screens.
 
 - Increased the contrast of Floating Paths, moved the curves toward the right, and animated opacity so the full strokes stay visible. Verified the curves on the refreshed dashboard in the browser.
 

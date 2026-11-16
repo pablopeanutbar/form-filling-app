@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight, ChevronDown, CircleHelp, FileQuestion, History, Info,
-  LogOut, MessageSquare, Monitor, NotebookPen, SlidersHorizontal, UserRound
+  Link2, LogOut, MessageSquare, Monitor, NotebookPen, UserRound
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useUnsaved } from '../context/UnsavedContext.jsx';
@@ -24,7 +24,7 @@ function Availability({ children }) {
 
 function HistoryPage() {
   return <>
-    <PageHeader eyebrow="Your activity" title="History" description="A place to look back on your form-filling activity." />
+    <PageHeader title="History" />
     <section className="app-panel ap-history" aria-labelledby="activity-title">
       <div className="ap-card-header"><h2 id="activity-title">Recent activity</h2><Availability>Not available yet</Availability></div>
       <div className="ap-history-empty">
@@ -56,44 +56,29 @@ function SettingsPage() {
   });
 
   return <>
-    <PageHeader eyebrow="Make yourself at home" title="Account settings" description="Your account details, saved information, and sign-in session." />
-    <div className="ap-layout">
-      <div className="ap-stack">
-        <section className="app-panel ap-settings-card">
-          <SectionHeading icon={UserRound} title="Your account" description="The account you use to sign in to formER." />
-          <dl className="ap-account-details">
-            <div><dt>Sign-in email</dt><dd>{user?.email || 'Email unavailable'}</dd></div>
-            {memberSince && <div><dt>Member since</dt><dd>{memberSince}</dd></div>}
-          </dl>
-          <p className="ap-caption">Changing your sign-in email or password isn’t available yet.</p>
-        </section>
-        <section className="app-panel ap-settings-card">
-          <SectionHeading icon={NotebookPen} title="Your saved information" description="Personal details for your applications, all in one place." />
-          <p className="ap-section-copy">Review and edit your contact details, addresses, education, and work experience in My Information.</p>
-          <TextLink to="/app/profile">Manage my information</TextLink>
-          <p className="ap-caption ap-separated">Your application contact email can be different from your sign-in email.</p>
-        </section>
-        <section className="app-panel ap-settings-card">
-          <SectionHeading icon={Monitor} title="Your session" description="Finished for now? Sign out of this browser." />
-          <div className="ap-session-action"><p>Your saved information will be here when you sign back in.</p>
-            <Button variant="secondary" icon={LogOut} isLoading={busy} onClick={signOut} aria-busy={busy}>
-              <span>{busy ? 'Signing out…' : 'Sign out'}</span>
-            </Button>
-          </div>
-          {error && <Alert className="ap-signout-error" message={error} />}
-        </section>
-      </div>
-      <aside className="ap-aside">
-        <section className="ap-guide">
-          <span className="section-icon" aria-hidden="true"><SlidersHorizontal size={21} strokeWidth={1.6} /></span>
-          <h2>Your information. Your choices.</h2>
-          <p>Choose which personal details you save in formER. Review them in My Information whenever something changes.</p>
-          <div className="ap-guide-divider" />
-          <h3>Using a shared device?</h3>
-          <p>Sign out when you’re done to help keep your saved information private.</p>
-        </section>
-        <div className="ap-side-note"><h3>Extension connections</h3><p>Review and disconnect copies of formER that can request suggestions from your saved information.</p><TextLink to="/extension/connections">Manage connections</TextLink><p>Data export and account deletion aren’t available yet.</p></div>
-      </aside>
+    <PageHeader title="Account settings" />
+    <div className="ap-stack">
+      <section className="app-panel ap-settings-card">
+        <SectionHeading icon={UserRound} title="Your account" description="The account you use to sign in to formER." />
+        <dl className="ap-account-details">
+          <div><dt>Sign-in email</dt><dd>{user?.email || 'Email unavailable'}</dd></div>
+          {memberSince && <div><dt>Member since</dt><dd>{memberSince}</dd></div>}
+        </dl>
+        <p className="ap-caption">Changing your sign-in email or password isn’t available yet.</p>
+      </section>
+      <section className="app-panel ap-settings-card">
+        <SectionHeading icon={Link2} title="Extension connections" description="See which copies of the formER extension are connected to your account." />
+        <TextLink to="/extension/connections">Manage connections</TextLink>
+      </section>
+      <section className="app-panel ap-settings-card">
+        <SectionHeading icon={Monitor} title="Your session" description="Finished for now? Sign out of this browser." />
+        <div className="ap-session-action"><p>Your saved information will be here when you sign back in.</p>
+          <Button variant="secondary" icon={LogOut} isLoading={busy} onClick={signOut} aria-busy={busy}>
+            <span>{busy ? 'Signing out…' : 'Sign out'}</span>
+          </Button>
+        </div>
+        {error && <Alert className="ap-signout-error" message={error} />}
+      </section>
     </div>
   </>;
 }
@@ -125,7 +110,7 @@ const reportTopics = [
 
 function ReportPage() {
   return <>
-    <PageHeader eyebrow="When something needs attention" title="Report a problem" description="Find guidance for common issues and see what’s currently supported." />
+    <PageHeader title="Report a problem" />
     <div className="ap-layout">
       <section className="app-panel ap-report" aria-labelledby="report-title">
         <div className="ap-report-intro">

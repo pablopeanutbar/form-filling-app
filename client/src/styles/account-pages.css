@@ -53,7 +53,7 @@
 .account-pages .ap-guide h2 { font-size: 20px; line-height: 1.4; letter-spacing: -.55px; }
 .account-pages .ap-guide p { margin-top: 12px; font-size: 12px; line-height: 1.85; color: var(--app-muted); }
 .account-pages .ap-side-note { padding: 0 8px; }
-.account-pages .ap-side-note h3, .account-pages .ap-guide h3 { font-size: 12px; font-weight: 600; }
+.account-pages .ap-side-note h3 { font-size: 12px; font-weight: 600; }
 .account-pages .ap-side-note p { margin-top: 8px; color: var(--app-muted); font-size: 12px; line-height: 1.85; }
 .account-pages .ap-settings-card { padding: 28px; }
 .account-pages .ap-section-heading { display: flex; align-items: flex-start; gap: 13px; }
@@ -67,7 +67,6 @@
 .account-pages .ap-caption { color: var(--app-muted); font-size: 11px; line-height: 1.8; }
 .account-pages .ap-section-copy { margin: 22px 0 5px; color: var(--app-muted); font-size: 13px; line-height: 1.8; }
 .account-pages .ap-separated { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--app-line); }
-.account-pages .ap-guide-divider { height: 1px; margin: 24px 0; background: var(--app-line); }
 .account-pages .ap-session-action { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 18px; margin-top: 24px; }
 .account-pages .ap-session-action p { max-width: 250px; color: var(--app-muted); font-size: 12px; }
 .account-pages .ap-session-action button { flex-shrink: 0; font-size: 12px; }

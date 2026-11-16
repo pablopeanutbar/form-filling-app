@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, UserRound, History, Settings2, MessageSquare, Menu, ChevronUp, LogOut, FileCheck2 } from 'lucide-react';
+import { LayoutDashboard, UserRound, History, Settings2, MessageSquare, Menu, ChevronUp, LogOut, FileCheck2, Download } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useUnsaved } from '../../context/UnsavedContext.jsx';
 import { Dialog } from '../common/Dialog.jsx';
@@ -51,14 +51,17 @@ export function AppShell() {
       </div>
     </aside>
     <div className="workspace-body">
-      <div className="workspace-topbar"><div className="mobile-brand"><FileCheck2 size={20} /><span>formER</span></div>
-        <button className="icon-button mobile-menu-button" aria-label="Open navigation" onClick={() => setMobile(true)}><Menu size={22} /></button></div>
+      <header className="workspace-topbar">
+        <div className="mobile-brand"><FileCheck2 size={20} /><span>formER</span></div>
+        <Link className="app-button workspace-extension-link" to="/extension"><Download size={16} aria-hidden="true" />Download extension</Link>
+        <button className="icon-button mobile-menu-button" aria-label="Open navigation" onClick={() => setMobile(true)}><Menu size={22} /></button>
+      </header>
       <main id="workspace-main" className="workspace-main relative isolate" tabIndex={-1}>
         <FloatingPathsBackground className="pointer-events-none absolute inset-0 -z-10" position={-1} />
         {error && <div className="form-alert" role="alert">{error}<button onClick={signOut}>Try again</button></div>}
         <Outlet />
       </main>
-      <footer className="workspace-footer"><span>Your information. On your terms.</span><span>formER</span></footer>
+      <footer className="workspace-footer"><span>formER</span></footer>
     </div>
     {mobile && <Dialog title="Your workspace" onClose={() => setMobile(false)}>{nav}
       <div className="mobile-account"><p>{user?.email}</p><button className="app-button secondary" disabled={busy} onClick={signOut}><LogOut size={16} />Sign out</button></div>
