@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
+    "test:extension-phase1": "node --test tests/extension-authorization.test.js tests/extension-safety.test.js tests/extension-client.test.js tests/extension.test.js",
     "test": "node --test tests/health.test.js && node --test tests/error.test.js && node --test tests/db.test.js && node --test tests/auth.test.js && node --test tests/profile.test.js && node --test tests/matching.test.js && node --test tests/extension.test.js && node --test tests/chrome-extension.e2e.test.js"
   },
   "keywords": [

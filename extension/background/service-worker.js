@@ -1,3 +1,5 @@
+import { connectionActions, trustedPopup, withConnectionLock, analyzeFields } from './connection.js';
+
 /**
  * formER Background Service Worker
  * Manages tab communication, scripts execution, and coordinates future backend API calls.
@@ -92,6 +94,19 @@ const handleDetectFields = async (tabId) => {
  * Main Extension Message Listener
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (!trustedPopup(sender)) return false;
+  if (connectionActions[message.type] || message.type === 'ANALYZE_FORM') {
+    withConnectionLock(async () => {
+      if (connectionActions[message.type]) return connectionActions[message.type]();
+      const extracted = await handleDetectFields(message.tabId);
+      if (!extracted?.success) throw new Error('This page could not be checked. Try another webpage with a form.');
+      if (!extracted.fields?.length) return { ...extracted, results: [] };
+      if (extracted.fields.length > 100) throw new Error('This form has more than 100 fields. Please use a smaller form or a single step.');
+      return { ...extracted, ...await analyzeFields(extracted.fields) };
+    }).then((data) => sendResponse({ success: true, data }))
+      .catch((error) => sendResponse({ success: false, error: error.code || 'REQUEST_FAILED', message: error.message || 'Please try again.' }));
+    return true;
+  }
   if (message.type === 'DETECT_FIELDS') {
     const tabId = message.tabId;
     if (!tabId) {

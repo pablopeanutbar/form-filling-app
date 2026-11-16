@@ -6,9 +6,57 @@ document.addEventListener('DOMContentLoaded', () => {
     'pageStatusBadge', 'pageTitle', 'pageDomain', 'introTitle', 'introDescription',
     'detectBtn', 'btnText', 'btnSpinner', 'buttonIcon', 'announcement', 'loadingPanel',
     'noticePanel', 'noticeTitle', 'noticeMessage', 'errorContainer', 'errorMessage',
-    'resultsContainer', 'resultsTitle', 'fieldsList', 'excludedNote'
+    'resultsContainer', 'resultsTitle', 'fieldsList', 'excludedNote', 'connectionTitle', 'connectionDescription',
+    'pairingCode', 'connectionError', 'connectBtn', 'disconnectBtn'
   ].map((id) => [id, document.getElementById(id)]));
   let busy = false;
+  let connection = { state: 'disconnected' };
+  let accountBusy = false;
+  let pollTimer;
+  const connected = () => connection.state === 'connected';
+
+  function renderConnection(status) {
+    const changed = connection.state !== status.state || connection.account?.id !== status.account?.id;
+    connection = status;
+    clearTimeout(pollTimer);
+    elements.connectionTitle.textContent = connected() ? 'Account connected' : status.state === 'pending' ? 'Waiting for your approval' : 'Account not connected';
+    elements.connectionDescription.textContent = connected() ? status.account.email : status.state === 'pending'
+      ? 'Check that this code matches the website, then approve. Return here to finish connecting.'
+      : status.message || 'Connect to get suggestions from your saved information. Nothing will be filled in automatically.';
+    elements.pairingCode.hidden = status.state !== 'pending';
+    elements.pairingCode.textContent = status.verificationCode || '';
+    elements.connectBtn.hidden = connected();
+    elements.connectBtn.textContent = status.state === 'pending' ? 'Open approval page' : 'Connect account';
+    elements.connectBtn.disabled = false;
+    elements.disconnectBtn.hidden = !connected() && status.state !== 'pending';
+    elements.disconnectBtn.textContent = status.state === 'pending' ? 'Cancel connection' : 'Disconnect';
+    if (changed) {
+      elements.fieldsList.replaceChildren();
+      elements.resultsContainer.hidden = true;
+      if (!['unsupported', 'checking'].includes(document.body.dataset.state)) setState('ready', 'Ready to check');
+    }
+    if (!busy) elements.btnText.textContent = connected() ? 'Analyze form' : 'Detect fields';
+    if (status.state === 'pending') pollTimer = setTimeout(() => accountAction('CONNECTION_STATUS'), 3200);
+  }
+
+  async function accountAction(type) {
+    if (accountBusy || busy) { pollTimer = setTimeout(() => accountAction('CONNECTION_STATUS'), 3200); return; }
+    accountBusy = true;
+    elements.connectBtn.disabled = true; elements.disconnectBtn.disabled = true;
+    elements.connectionError.hidden = true;
+    try {
+      const result = await chrome.runtime.sendMessage({ type });
+      if (!result?.success) throw new Error(result?.message || 'The connection could not be checked. Please try again.');
+      renderConnection(result.data);
+    } catch (error) {
+      elements.connectionError.textContent = error.message || 'Please try connecting again.';
+      elements.connectionError.hidden = false;
+      if (connection.state === 'pending') pollTimer = setTimeout(() => accountAction('CONNECTION_STATUS'), 5000);
+    } finally { accountBusy = false; elements.connectBtn.disabled = false; elements.disconnectBtn.disabled = false; }
+  }
+  elements.connectBtn.addEventListener('click', () => accountAction('CONNECT_ACCOUNT'));
+  elements.disconnectBtn.addEventListener('click', () => accountAction('DISCONNECT_ACCOUNT'));
+  window.addEventListener('pagehide', () => clearTimeout(pollTimer));
 
   document.querySelectorAll('[data-website-path]').forEach((link) => {
     link.href = new URL(link.dataset.websitePath, WEBSITE_URL).href;
@@ -25,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function setState(state, status, buttonLabel = 'Detect fields') {
     document.body.dataset.state = state;
     elements.pageStatusBadge.textContent = status;
-    elements.btnText.textContent = buttonLabel;
+    elements.btnText.textContent = connected() ? (state === 'scanning' ? 'Analyzing form…' : ['results', 'empty'].includes(state) ? 'Analyze again' : state === 'error' ? 'Try again' : 'Analyze form') : buttonLabel;
     elements.btnSpinner.hidden = state !== 'scanning';
     elements.buttonIcon.toggleAttribute('hidden', state === 'scanning');
     elements.detectBtn.disabled = ['checking', 'scanning', 'unsupported'].includes(state);
@@ -96,11 +144,11 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(timer);
         resolve(result);
       };
-      const timer = setTimeout(() => finish({ success: false, error: 'TIMEOUT' }), 15000);
+      const timer = setTimeout(() => finish({ success: false, error: 'TIMEOUT' }), connected() ? 60000 : 15000);
       try {
-        chrome.runtime.sendMessage({ type: 'DETECT_FIELDS', tabId }, (response) => {
+        chrome.runtime.sendMessage({ type: connected() ? 'ANALYZE_FORM' : 'DETECT_FIELDS', tabId }, (response) => {
           const failed = chrome.runtime.lastError;
-          finish(failed ? { success: false, error: 'COMMUNICATION_ERROR' } : response);
+          finish(failed ? { success: false, error: 'COMMUNICATION_ERROR' } : response?.success && response.data ? { ...response.data, success: true } : response);
         });
       } catch { finish({ success: false, error: 'COMMUNICATION_ERROR' }); }
     });
@@ -122,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderField(field, index) {
     const label = fieldLabel(field);
     const hint = text(field.placeholder);
-    const options = Array.isArray(field.options) ? field.options.map(text).filter(Boolean).slice(0, 50) : [];
+    const options = Array.isArray(field.options) ? field.options.map((option) => text(typeof option === 'string' ? option : option.label)).filter(Boolean).slice(0, 50) : [];
     const hasHint = hint && hint !== label;
     const expandable = hasHint || options.length > 0 || label.length > 80;
     const item = node('li', 'field-item');
@@ -164,12 +212,32 @@ document.addEventListener('DOMContentLoaded', () => {
       const group = node('section', 'field-group');
       group.append(node('h3', '', label));
       const list = node('ul');
-      entries.forEach(({ field, index }) => list.append(renderField(field, index)));
+      entries.forEach(({ field, index }) => {
+        const item = renderField(field, index);
+        const result = data.results?.find((entry) => entry.fieldId === field.fieldId);
+        if (result) {
+          const statuses = { matched: 'Suggested answer', needs_review: 'Review needed', unmatched: 'No match found', unsupported: 'Not supported' };
+          const suggestion = node('div', 'suggestion');
+          const badge = node('span', 'review-status', statuses[result.status] || 'Review needed');
+          badge.dataset.state = result.status;
+          suggestion.append(badge);
+          if (result.value !== null && result.value !== undefined) suggestion.append(node('span', 'suggestion-value', String(result.displayValue ?? result.value)));
+          const explanation = result.status === 'matched' ? 'Check this answer before using it. Nothing has been filled.'
+            : result.status === 'unsupported' ? 'Please complete this field yourself.'
+            : result.status === 'unmatched' ? 'No compatible saved answer was found.'
+            : result.value === null ? 'A safe answer could not be selected. Check your saved details and the choices on the form.' : 'This suggestion is uncertain. Please check it carefully.';
+          suggestion.append(node('p', '', explanation));
+          if (result.source?.label) suggestion.append(node('div', 'suggestion-source', [result.source.label, result.source.record].filter(Boolean).join(' · ')));
+          item.append(suggestion);
+        }
+        list.append(item);
+      });
       group.append(list);
       elements.fieldsList.append(group);
     });
     const countLabel = `${fields.length} ${fields.length === 1 ? 'field' : 'fields'} found`;
-    elements.resultsTitle.textContent = countLabel;
+    elements.resultsTitle.textContent = data.results ? `${data.results.filter((result) => result.status === 'matched').length} suggested · ${fields.length} fields` : countLabel;
+    document.querySelector('.detection-status').textContent = data.results ? 'Analysis complete' : 'Detection complete';
     const excluded = data.stats?.excludedCount;
     elements.excludedNote.textContent = Number.isInteger(excluded) && excluded > 0
       ? `${excluded} ${excluded === 1 ? 'control was' : 'controls were'} skipped. Hidden, sensitive, or unsupported controls aren’t listed.` : '';
@@ -186,8 +254,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   elements.detectBtn.addEventListener('click', async () => {
-    if (busy) return;
+    if (busy || accountBusy) return;
     busy = true;
+    elements.connectBtn.disabled = true;
+    elements.disconnectBtn.disabled = true;
     setState('scanning', 'Checking fields…', 'Detecting fields…');
     elements.announcement.textContent = 'Looking for form fields.';
     try {
@@ -198,17 +268,18 @@ document.addEventListener('DOMContentLoaded', () => {
       if (response?.error === 'RESTRICTED_PAGE') {
         showUnavailable('This page can’t be checked', 'Open a regular webpage with a form, then try formER there.');
       } else if (!response?.success || !Array.isArray(response.fields) || response.fields.some((field) => !field || typeof field !== 'object')) {
-        const message = response?.error === 'TIMEOUT'
+        if (response?.error === 'CONNECTION_EXPIRED') renderConnection({ state: 'disconnected', message: 'Your connection expired. Please connect again.' });
+        const message = response?.message || (response?.error === 'TIMEOUT'
           ? 'This is taking longer than expected. Wait for the page to finish loading, then try again.'
           : tab.url.startsWith('file:')
             ? 'Chrome may need permission to read this file. Enable “Allow access to file URLs” in formER’s extension settings, then try again.'
-            : 'This page may not allow detection. Wait for it to finish loading and try again, or open another page with a form.';
+            : 'This page may not allow detection. Wait for it to finish loading and try again, or open another page with a form.');
         showError(message);
       } else {
         renderResults(response);
       }
     } catch { showError('We couldn’t reach this page. Check that it’s still open, then try again.'); }
-    finally { busy = false; }
+    finally { busy = false; elements.connectBtn.disabled = false; elements.disconnectBtn.disabled = false; }
   });
 
   async function initialize() {
@@ -218,4 +289,5 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch { showError('We couldn’t find your active page. Open a webpage and try again.'); }
   }
   initialize();
+  accountAction('CONNECTION_STATUS');
 });

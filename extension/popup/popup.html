@@ -63,8 +63,11 @@
     </main>
 
     <footer class="account-panel">
-      <div class="account-heading"><span class="connection-dot" aria-hidden="true"></span><h2>Account not connected</h2></div>
-      <p>Account connection and autofill aren’t available yet. You can manage your saved details on the website.</p>
+      <div class="account-heading"><span class="connection-dot" aria-hidden="true"></span><h2 id="connectionTitle">Checking connection…</h2></div>
+      <p id="connectionDescription">Connect to get suggestions from your saved information. Nothing will be filled in automatically.</p>
+      <p id="pairingCode" class="pairing-code" hidden></p>
+      <p id="connectionError" role="alert" hidden></p>
+      <div class="connection-actions"><button id="connectBtn" type="button" disabled>Connect account</button><button id="disconnectBtn" type="button" hidden>Disconnect</button></div>
       <a class="text-link" data-website-path="/app" target="_blank" rel="noopener noreferrer">Open formER <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg><span class="sr-only"> in a new tab</span></a>
     </footer>
   </div>

@@ -1,4 +1,5 @@
 import { getFieldByKey } from './fieldRegistry.js';
+import { validateDestination } from './destinationValidation.js';
 
 /**
  * Extract value from user profile using canonical key and qualification context
@@ -113,12 +114,9 @@ export const extractProfileValue = (profile, canonicalKey, field = {}) => {
     }
 
     // Still ambiguous: do NOT arbitrarily pick one without flagging review
-    const targetEdu = matchingEdus[0];
-    const val = targetEdu[fieldName];
-    const recId = targetEdu.id || targetEdu._id?.toString() || null;
     return {
-      value: val !== undefined && val !== null ? val : null,
-      recordId: recId,
+      value: null,
+      recordId: null,
       isAmbiguousRecord: true,
       warning: `Multiple qualification records found for "${levelKey}". Review recommended to confirm degree selection.`
     };
@@ -158,43 +156,48 @@ export const formatAndValidateValue = (value, fieldDef, field) => {
     if (strVal.length === 0) {
       return { formattedValue: null, isValid: false, message: 'String value is empty' };
     }
-    return { formattedValue: strVal, isValid: true };
+    return validateDestination(strVal, field);
   }
 
   // Number values
   if (dt === 'number') {
     const num = Number(value);
-    if (isNaN(num)) {
+    if (typeof value === 'boolean' || String(value).trim() === '' || !Number.isFinite(num)) {
       return { formattedValue: null, isValid: false, message: 'Invalid number format' };
+    }
+    if ((fieldDef.key.endsWith('.marksObtained') && num < 0) || (fieldDef.key.endsWith('.maxMarks') && num <= 0)) {
+      return { formattedValue: null, isValid: false, message: 'The saved marks are outside the valid range.' };
     }
 
     // Percentage bounds check
     if (fieldDef.key.endsWith('.percentage')) {
       if (num < 0 || num > 100) {
-        return { formattedValue: null, isValid: false, message: `Percentage out of valid range (0-100): ${num}` };
+        return { formattedValue: null, isValid: false, message: 'Saved percentage is outside the valid range (0–100).' };
       }
     }
 
-    return { formattedValue: num, isValid: true };
+    return validateDestination(num, field);
   }
 
   // Date values
   if (dt === 'date') {
     const dateStr = String(value).trim();
-    return { formattedValue: dateStr, isValid: true };
+    return validateDestination(dateStr, field);
   }
 
-  return { formattedValue: value, isValid: true };
+  return { formattedValue: null, isValid: false, message: 'This value type needs manual review.' };
 };
 
 /**
  * Check if extracted field is explicitly unsupported for autofilling
  */
 export const isUnsupportedField = (field) => {
-  const type = (field.type || '').toLowerCase().trim();
-  const unsupportedTypes = ['file', 'image', 'password', 'hidden', 'submit', 'button', 'reset', 'captcha'];
+  const type = (field.type || 'text').toLowerCase().trim();
+  const unsupportedTypes = ['file', 'image', 'password', 'hidden', 'submit', 'button', 'reset', 'captcha', 'checkbox'];
 
-  if (unsupportedTypes.includes(type)) {
+  const originalType = field.constraints?.inputType;
+  if (unsupportedTypes.includes(type) || !['text', 'email', 'tel', 'number', 'date', 'url', 'textarea', 'select', 'radio'].includes(type)
+      || (originalType && !['text', 'search', 'email', 'tel', 'number', 'date', 'url', 'textarea', 'select', 'radio', 'month', 'week', 'time', 'datetime-local'].includes(originalType))) {
     return {
       unsupported: true,
       reason: `Field type "${type}" is unsupported for automated autofill`
@@ -203,9 +206,9 @@ export const isUnsupportedField = (field) => {
 
   const label = (field.label || '').toLowerCase();
   const name = (field.name || '').toLowerCase();
-  const combined = `${label} ${name}`;
+  const combined = `${label} ${name} ${field.id || ''} ${field.placeholder || ''} ${field.section || ''}`.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase().replace(/[_-]/g, ' ');
 
-  if (combined.includes('captcha') || combined.includes('security code') || combined.includes('verification code') || combined.includes('otp')) {
+  if (/captcha|password|passcode|one time|verification|security code|\botp\b|\b(?:cvv|cvc|2fa|mfa)\b|credit.?card|debit.?card|card.?number|card.?holder|\bcc\b|expiry|expiration/.test(combined)) {
     return {
       unsupported: true,
       reason: 'Security and verification challenge fields cannot be automated'
@@ -221,7 +224,19 @@ export const isUnsupportedField = (field) => {
 export const violatesNegativeGuards = (field, candidateKey) => {
   const label = (field.label || '').toLowerCase();
   const section = (field.section || '').toLowerCase();
-  const combined = `${section} ${label}`;
+  const combined = `${field.section || ''} ${field.label || ''} ${field.name || ''} ${field.id || ''} ${field.placeholder || ''}`.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase().replace(/[_-]/g, ' ');
+  if (/\b(parent|father|mother|guardian|spouse|emergency|referee|reference)\b/.test(combined)
+      && (candidateKey.startsWith('contact.') || ['personal.fullName', 'personal.dateOfBirth', 'personal.gender'].includes(candidateKey))) return true;
+  const percent = /percentage|percent|\bpct\b|%/.test(combined);
+  const marks = /\bmarks?\b|\bscore\b/.test(combined);
+  if (candidateKey.endsWith('.percentage') && marks && !percent) return true;
+  if (/\.(marksObtained|maxMarks)$/.test(candidateKey) && (percent || /\b[sc]?gpa\b/.test(combined))) return true;
+  if (candidateKey.endsWith('.marksObtained') && /\b(maximum|max|total|out of)\b/.test(combined)) return true;
+  if (candidateKey.endsWith('.maxMarks') && /obtained|scored|secured/.test(combined)) return true;
+  if (candidateKey.startsWith('education.') && /\bmarks?\b/.test(combined) && !percent && !/\.(marksObtained|maxMarks)$/.test(candidateKey)) return true;
+  if (candidateKey.startsWith('education.10th') && /class\s*(12|xii)\b/.test(combined)) return true;
+  if (candidateKey.startsWith('education.12th') && /class\s*(10|x)\b/.test(combined)) return true;
+  if (candidateKey.startsWith('education.undergraduate') && /class\s*(10|12|x|xii)\b/.test(combined)) return true;
 
   // Father vs Mother vs Applicant
   if (candidateKey === 'personal.fatherName' && (combined.includes('mother') || combined.includes('guardian'))) {
@@ -351,7 +366,7 @@ export const validateCandidate = (field, candidate, profile, allCandidates = [])
   }
 
   // 7. Format and validate the value
-  const { formattedValue, isValid, message: valMessage } = formatAndValidateValue(rawVal, fieldDef, field);
+  const { formattedValue, displayValue, isValid, message: valMessage } = formatAndValidateValue(rawVal, fieldDef, field);
 
   // 8. Decide final status & confidence
   const isDeterministic = candidate.method.startsWith('deterministic');
@@ -363,6 +378,7 @@ export const validateCandidate = (field, candidate, profile, allCandidates = [])
       fieldId,
       canonicalKey: candidate.canonicalKey,
       value: formattedValue,
+      displayValue,
       educationRecordId: educationRecordId || undefined,
       status: 'needs_review',
       confidence: Math.round(baseConfidence * 100) / 100,
@@ -378,6 +394,7 @@ export const validateCandidate = (field, candidate, profile, allCandidates = [])
       fieldId,
       canonicalKey: candidate.canonicalKey,
       value: formattedValue,
+      displayValue,
       educationRecordId: educationRecordId || undefined,
       status: 'needs_review',
       confidence: Math.round(baseConfidence * 100) / 100,
@@ -408,6 +425,7 @@ export const validateCandidate = (field, candidate, profile, allCandidates = [])
       fieldId,
       canonicalKey: candidate.canonicalKey,
       value: formattedValue,
+      displayValue,
       educationRecordId: educationRecordId || undefined,
       status: 'matched',
       confidence: Math.round(baseConfidence * 100) / 100,
@@ -417,14 +435,15 @@ export const validateCandidate = (field, candidate, profile, allCandidates = [])
     };
   }
 
-  // Case D: Semantic match with high confidence (>= 0.85) -> MATCHED with review recommendation
+  // Similarity is not an accuracy probability; semantic suggestions always require review.
   if (candidate.method === 'semantic_embedding' && baseConfidence >= 0.80) {
     return {
       fieldId,
       canonicalKey: candidate.canonicalKey,
       value: formattedValue,
+      displayValue,
       educationRecordId: educationRecordId || undefined,
-      status: 'matched',
+      status: 'needs_review',
       confidence: Math.round(baseConfidence * 100) / 100,
       method: 'semantic_embedding',
       reason: candidate.explanation || `Matched via semantic similarity (${(baseConfidence * 100).toFixed(1)}%)`,
@@ -438,6 +457,7 @@ export const validateCandidate = (field, candidate, profile, allCandidates = [])
       fieldId,
       canonicalKey: candidate.canonicalKey,
       value: formattedValue,
+      displayValue,
       educationRecordId: educationRecordId || undefined,
       status: 'needs_review',
       confidence: Math.round(baseConfidence * 100) / 100,

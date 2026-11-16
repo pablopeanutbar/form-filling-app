@@ -39,7 +39,7 @@ const extractSelectOptions = (selectEl) => {
       continue;
     }
 
-    options.push(text || val);
+    options.push({ label: text || val, value: val, disabled: Boolean(opt.disabled || opt.parentElement?.disabled) });
   }
 
   return options;
@@ -89,7 +89,8 @@ export const extractFormFields = (root = document) => {
 
     if (type === 'radio') {
       const radioName = (el.name || el.getAttribute('name') || 'unnamed_radio').trim();
-      const groupKey = radioName !== 'unnamed_radio' ? radioName : `radio_fieldset_${radioGroups.size}`;
+      const formIndex = Array.from(root.querySelectorAll('form')).indexOf(el.form);
+      const groupKey = radioName !== 'unnamed_radio' ? `${formIndex}:${radioName}` : `radio_fieldset_${radioGroups.size}`;
 
       if (!radioGroups.has(groupKey)) {
         radioGroups.set(groupKey, []);
@@ -117,15 +118,21 @@ export const extractFormFields = (root = document) => {
 
     // Extract options for select elements
     let options = undefined;
+    let optionsTruncated = false;
     if (type === 'select') {
       const opts = extractSelectOptions(el);
+      optionsTruncated = opts.length > 50;
       if (opts.length > 0) {
         options = opts.slice(0, 50); // Cap at top 50 options to adhere to validation bounds
       }
     }
 
     // Extract relevant constraints
-    const constraints = {};
+    const constraints = { inputType: (el.getAttribute('type') || type).toLowerCase(), multiple: Boolean(el.multiple) };
+    if (el.hasAttribute('minlength')) {
+      const length = Number(el.getAttribute('minlength'));
+      if (Number.isInteger(length) && length >= 0) constraints.minlength = length;
+    }
     if (el.hasAttribute('maxlength')) {
       const ml = parseInt(el.getAttribute('maxlength'), 10);
       if (!isNaN(ml)) constraints.maxlength = ml;
@@ -144,6 +151,7 @@ export const extractFormFields = (root = document) => {
       placeholder,
       section,
       options,
+      optionsTruncated,
       required,
       constraints: Object.keys(constraints).length > 0 ? constraints : undefined
     });
@@ -177,7 +185,7 @@ export const extractFormFields = (root = document) => {
     const options = radioElements.map((radio) => {
       const optLabel = resolveLabel(radio);
       const val = radio.value !== undefined ? String(radio.value).trim() : '';
-      return optLabel || val || 'Option';
+      return { label: optLabel || val || 'Option', value: val, disabled: Boolean(radio.disabled) };
     });
 
     const isRequired = radioElements.some((r) => r.required || r.getAttribute('aria-required') === 'true');
@@ -190,7 +198,8 @@ export const extractFormFields = (root = document) => {
       label: groupLabel || name,
       placeholder: '',
       section,
-      options,
+      options: options.slice(0, 50),
+      optionsTruncated: options.length > 50,
       required: isRequired
     });
   }

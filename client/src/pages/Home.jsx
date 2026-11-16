@@ -37,7 +37,8 @@ function Dashboard() {
         <TextLink to="/app/profile/education">{education.length ? 'Manage qualifications' : 'Add a qualification'}</TextLink>
       </section>
       <section className="extension-guide"><Chrome size={24} strokeWidth={1.6} /><p className="eyebrow">In your browser</p><h2>Your next step, explained.</h2>
-        <p>The Chrome extension currently detects form fields. Account connection and filling saved answers aren’t available yet.</p>
+        <p>Connect the Chrome extension to review suggestions from your saved information. Filling fields automatically isn’t available yet.</p>
+        <TextLink to="/extension">Get the Extension</TextLink>
         <details><summary>How to prepare <ArrowUpRight size={15} /></summary><ol><li>Save the details you use most often.</li><li>Keep each qualification up to date.</li><li>Review every answer before submitting an application yourself.</li></ol></details>
       </section>
     </aside>

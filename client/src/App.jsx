@@ -13,6 +13,8 @@ import { AccountPages } from './pages/AccountPages.jsx';
 
 const AppShell = lazy(() => import('./components/layout/AppShell.jsx').then((module) => ({ default: module.AppShell })));
 const MyInformation = lazy(() => import('./pages/MyInformation.jsx').then((module) => ({ default: module.MyInformation })));
+const Extension = lazy(() => import('./pages/Extension.jsx').then((module) => ({ default: module.Extension })));
+const ExtensionConnection = lazy(() => import('./pages/ExtensionConnection.jsx').then((module) => ({ default: module.ExtensionConnection })));
 const opening = <div className="p-8 text-former-secondary" role="status">Opening your workspace…</div>;
 const pageError = <main className="min-h-screen bg-former-canvas flex items-center justify-center p-8"><div className="max-w-sm text-center"><h1 className="text-2xl font-semibold mb-3">We couldn’t open this page</h1><p className="text-former-secondary mb-6">Please reload the page and try again.</p><button className="bg-primary text-white rounded-full px-6 py-3" onClick={() => window.location.reload()}>Reload page</button></div></main>;
 
@@ -22,6 +24,9 @@ const router = createBrowserRouter([{
   errorElement: pageError,
   children: [
     { path: '/', element: <LandingPage /> },
+    { path: '/extension', element: <Suspense fallback={<div className="p-8" role="status">Opening extension guide…</div>}><Extension /></Suspense> },
+    { path: '/extension/connect/:pairingId', element: <ProtectedRoute><Suspense fallback={opening}><ExtensionConnection /></Suspense></ProtectedRoute> },
+    { path: '/extension/connections', element: <ProtectedRoute><Suspense fallback={opening}><ExtensionConnection /></Suspense></ProtectedRoute> },
     { path: '/login', element: <PublicRoute><Login /></PublicRoute> },
     { path: '/register', element: <PublicRoute><Register /></PublicRoute> },
     { path: '/app', element: <ProtectedRoute><ProfileProvider><UnsavedProvider><Suspense fallback={opening}><AppShell /></Suspense></UnsavedProvider></ProfileProvider></ProtectedRoute>, children: [

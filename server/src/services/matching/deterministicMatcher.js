@@ -340,8 +340,14 @@ export const matchFieldDeterministically = (field) => {
     notContains(['10th', '12th', 'master', 'postgraduate', 'pg']);
 
   // Class 10 Matches
+  const marksLevel = is10th ? '10th' : is12th ? '12th' : isUndergrad ? 'undergraduate' : null;
+  if (marksLevel && hasAny(combined, ['marks obtained', 'obtained marks', 'marks scored', 'marks secured', 'maximum marks', 'max marks', 'marks out of'])
+      && notContains(['percentage', 'percent', 'cgpa', 'gpa']) && !field.label?.includes('%')) {
+    const metric = hasAny(combined, ['maximum marks', 'max marks', 'marks out of']) ? 'maxMarks' : 'marksObtained';
+    return { matched: true, canonicalKey: `education.${marksLevel}.${metric}`, confidence: 1, method: 'deterministic_rule', reason: 'Explicit qualification and marks measurement.' };
+  }
   if (is10th) {
-    if ((hasAny(combined, ['percentage', 'percent', 'marks percentage', 'marks', 'pct', 'score']) || (field.label && field.label.includes('%'))) && notContains(['cgpa', 'gpa', 'total marks', 'max marks', 'maximum marks'])) {
+    if ((hasAny(combined, ['percentage', 'percent', 'marks percentage', 'pct']) || (field.label && field.label.includes('%'))) && notContains(['cgpa', 'gpa', 'total marks', 'max marks', 'maximum marks'])) {
       return {
         matched: true,
         canonicalKey: 'education.10th.percentage',
@@ -381,7 +387,7 @@ export const matchFieldDeterministically = (field) => {
 
   // Class 12 Matches
   if (is12th) {
-    if ((hasAny(combined, ['percentage', 'percent', 'marks percentage', 'marks', 'pct', 'score']) || (field.label && field.label.includes('%'))) && notContains(['cgpa', 'gpa', 'total marks', 'max marks', 'maximum marks'])) {
+    if ((hasAny(combined, ['percentage', 'percent', 'marks percentage', 'pct']) || (field.label && field.label.includes('%'))) && notContains(['cgpa', 'gpa', 'total marks', 'max marks', 'maximum marks'])) {
       return {
         matched: true,
         canonicalKey: 'education.12th.percentage',
@@ -441,7 +447,7 @@ export const matchFieldDeterministically = (field) => {
       };
     }
 
-    if ((hasAny(combined, ['percentage', 'percent', 'aggregate percentage', 'marks', 'pct']) || (field.label && field.label.includes('%'))) && notContains(['cgpa', 'gpa', 'total marks', 'max marks', 'maximum marks'])) {
+    if ((hasAny(combined, ['percentage', 'percent', 'aggregate percentage', 'pct']) || (field.label && field.label.includes('%'))) && notContains(['cgpa', 'gpa', 'total marks', 'max marks', 'maximum marks'])) {
       return {
         matched: true,
         canonicalKey: 'education.undergraduate.percentage',

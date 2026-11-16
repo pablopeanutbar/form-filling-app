@@ -140,7 +140,7 @@ describe('Milestone 5: Chrome Extension Form Extraction Tests', () => {
     assert.equal(fields.length, 1);
     assert.equal(fields[0].type, 'select');
     assert.equal(fields[0].label, 'Select State');
-    assert.deepEqual(fields[0].options, ['Illinois', 'California', 'New York']);
+    assert.deepEqual(fields[0].options.map((option) => option.label), ['Illinois', 'California', 'New York']);
   });
 
   // ========================================================
@@ -167,7 +167,7 @@ describe('Milestone 5: Chrome Extension Form Extraction Tests', () => {
     assert.equal(fields[0].type, 'radio');
     assert.equal(fields[0].name, 'gender');
     assert.equal(fields[0].label, 'Gender');
-    assert.deepEqual(fields[0].options, ['Male', 'Female', 'Other']);
+    assert.deepEqual(fields[0].options.map((option) => option.label), ['Male', 'Female', 'Other']);
   });
 
   // ========================================================

@@ -1,6 +1,9 @@
 {
   "name": "former-extension",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
-  "private": true
+  "private": true,
+  "scripts": {
+    "package:dev": "powershell -NoProfile -File scripts/package.ps1"
+  }
 }

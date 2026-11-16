@@ -103,7 +103,7 @@ function SettingsPage() {
           <h3>Using a shared device?</h3>
           <p>Sign out when you’re done to help keep your saved information private.</p>
         </section>
-        <div className="ap-side-note"><h3>About account controls</h3><p>Data export, account deletion, and extension connection controls aren’t available yet.</p></div>
+        <div className="ap-side-note"><h3>Extension connections</h3><p>Review and disconnect copies of formER that can request suggestions from your saved information.</p><TextLink to="/extension/connections">Manage connections</TextLink><p>Data export and account deletion aren’t available yet.</p></div>
       </aside>
     </div>
   </>;
@@ -119,7 +119,7 @@ const reportTopics = [
   {
     id: 'extension', icon: Monitor, title: 'A form or extension isn’t working',
     description: 'Fields aren’t detected or filled as expected.',
-    guidance: 'The extension currently detects form fields. Connecting your account and filling saved answers aren’t available yet. You can still complete the form yourself on the original website.'
+    guidance: 'Connect your account in the extension, then choose Analyze form for suggestions. Filling fields automatically isn’t available yet. You can still complete the form yourself on the original website.'
   },
   {
     id: 'account', icon: UserRound, title: 'Account or saved information',

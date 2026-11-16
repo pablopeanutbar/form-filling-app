@@ -27,6 +27,7 @@ pids
 dist/
 build/
 out/
+artifacts/
 
 # IDE & OS files
 .vscode/

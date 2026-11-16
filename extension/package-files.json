@@ -1,0 +1,14 @@
+[
+  "manifest.json",
+  "config.js",
+  "background/service-worker.js",
+  "background/connection.js",
+  "content/content.js",
+  "popup/popup.html",
+  "popup/popup.js",
+  "popup/popup.css",
+  "icons/icon16.png",
+  "icons/icon48.png",
+  "icons/icon128.png",
+  "icons/LICENSE-lucide.txt"
+]

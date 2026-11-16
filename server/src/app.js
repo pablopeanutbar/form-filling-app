@@ -4,7 +4,7 @@ import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import session from 'express-session';
 import MongoStore from 'connect-mongo';
-import { env, allowedOrigins } from './config/env.js';
+import { env, allowedOrigins, extensionIds } from './config/env.js';
 import apiRoutes from './routes/index.js';
 import { notFoundHandler } from './middleware/notFound.middleware.js';
 import { errorHandler } from './middleware/error.middleware.js';
@@ -31,7 +31,8 @@ const corsOptions = {
       !isProduction &&
       (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'));
 
-    if (isExplicitlyAllowed || isDevLocalhost) {
+    const isExtension = extensionIds.some((id) => origin === `chrome-extension://${id}`);
+    if (isExplicitlyAllowed || isDevLocalhost || isExtension) {
       return callback(null, true);
     }
 
@@ -42,7 +43,7 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-csrf-token']
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-csrf-token', 'X-Extension-Id']
 };
 
 app.use(cors(corsOptions));

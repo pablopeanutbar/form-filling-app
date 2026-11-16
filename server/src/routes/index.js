@@ -3,6 +3,7 @@ import healthRoutes from './health.routes.js';
 import authRoutes from './auth.routes.js';
 import profileRoutes from './profile.routes.js';
 import autofillRoutes from './autofill.routes.js';
+import extensionRoutes from './extension.routes.js';
 
 const router = Router();
 
@@ -17,5 +18,6 @@ router.use('/profile', profileRoutes);
 
 // Mount intelligent form field autofill matching routes (/api/v1/autofill/*)
 router.use('/autofill', autofillRoutes);
+router.use('/extension', extensionRoutes);
 
 export default router;

@@ -5,6 +5,10 @@
  */
 
 export const CANONICAL_FIELDS = [
+  ...['10th', '12th', 'undergraduate'].flatMap((level) => [
+    { key: `education.${level}.marksObtained`, label: `${level === 'undergraduate' ? 'Undergraduate' : `Class ${level.slice(0, -2)}`} marks obtained`, category: 'education', dataType: 'number', description: `Actual marks obtained in ${level}, not a percentage or grade`, aliases: [] },
+    { key: `education.${level}.maxMarks`, label: `${level} maximum marks`, category: 'education', dataType: 'number', description: `Maximum possible marks for ${level}, not obtained marks or a percentage`, aliases: [] }
+  ]),
   // ==========================================
   // Personal Information
   // ==========================================

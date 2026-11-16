@@ -1,6 +1,7 @@
 import { matchFieldDeterministically } from './deterministicMatcher.js';
-import { rankCandidatesBatch, initCanonicalEmbeddings } from './semanticMatcher.js';
+import { rankCandidatesBatch } from './semanticMatcher.js';
 import { validateCandidate, isUnsupportedField } from './validationEngine.js';
+import { getFieldByKey } from './fieldRegistry.js';
 
 /**
  * Orchestrate the complete form field matching pipeline
@@ -22,11 +23,6 @@ export const matchFormFields = async (fields, profile) => {
       }
     };
   }
-
-  // Ensure canonical embeddings are warm
-  await initCanonicalEmbeddings().catch((err) => {
-    // Model initialization handled gracefully
-  });
 
   const decisions = new Array(fields.length);
   const fieldsForSemantic = [];
@@ -86,6 +82,11 @@ export const matchFormFields = async (fields, profile) => {
   };
 
   for (const dec of decisions) {
+    const source = getFieldByKey(dec.canonicalKey);
+    if (source) {
+      const record = profile.education?.find((entry) => String(entry.id || entry._id) === dec.educationRecordId);
+      dec.source = { label: source.label, ...(record ? { record: [record.degreeName, record.institution].filter(Boolean).join(' · ') } : {}) };
+    }
     if (dec.status === 'matched') summary.matched++;
     else if (dec.status === 'needs_review') summary.needsReview++;
     else if (dec.status === 'unsupported') summary.unsupported++;

@@ -17,7 +17,8 @@ const envSchema = z.object({
     .min(32, 'SESSION_SECRET must be at least 32 characters long for cryptographic security')
     .default('dev_session_secret_former_platform_secure_random_key_32_chars'),
   SESSION_MAX_AGE_MS: z.coerce.number().default(604800000), // 7 days in ms
-  ALLOWED_ORIGINS: z.string().default('http://localhost:5173')
+  ALLOWED_ORIGINS: z.string().default('http://localhost:5173'),
+  EXTENSION_IDS: z.string().default('').refine((value) => value.split(',').map((id) => id.trim()).filter(Boolean).every((id) => /^[a-p]{32}$/.test(id)), 'EXTENSION_IDS must contain Chrome extension IDs')
 });
 
 const parsed = envSchema.safeParse(process.env);
@@ -29,6 +30,7 @@ if (!parsed.success) {
 }
 
 export const env = parsed.data;
+export const extensionIds = env.EXTENSION_IDS.split(',').map((id) => id.trim()).filter(Boolean);
 
 export const allowedOrigins = env.ALLOWED_ORIGINS
   .split(',')
