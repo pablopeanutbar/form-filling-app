@@ -41,12 +41,13 @@ export const Input = React.forwardRef(
             id={id}
             type={computedType}
             disabled={disabled}
+            required={required}
             aria-invalid={!!error}
             aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
             className={cn(
-              'w-full h-11 px-3.5 bg-white text-[15px] text-former-text placeholder:text-former-text-muted rounded-input border border-former-border-strong transition-all duration-150',
+              'w-full h-11 px-3.5 bg-white text-[15px] text-former-text placeholder:text-former-muted rounded-control border border-former-border-strong transition-all duration-150',
               'focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent',
-              'disabled:bg-former-canvas-muted disabled:text-former-disabled disabled:cursor-not-allowed',
+              'disabled:bg-former-canvas disabled:text-former-disabled disabled:cursor-not-allowed',
               error && 'border-former-error focus:ring-former-error text-former-error',
               isPassword && 'pr-11',
               className
@@ -57,10 +58,10 @@ export const Input = React.forwardRef(
           {isPassword && (
             <button
               type="button"
-              tabIndex={-1}
+              disabled={disabled}
               onClick={() => setShowPassword((prev) => !prev)}
               aria-label={showPassword ? 'Hide password' : 'Show password'}
-              className="absolute right-0 h-11 w-11 flex items-center justify-center text-former-text-muted hover:text-former-text transition-colors focus:outline-none focus-visible:text-primary"
+              className="absolute right-0 h-11 w-11 flex items-center justify-center text-former-muted hover:text-former-text transition-colors focus-visible:ring-2 focus-visible:ring-primary rounded-control"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -74,7 +75,7 @@ export const Input = React.forwardRef(
         )}
 
         {!error && hint && (
-          <p id={`${id}-hint`} className="text-[13px] text-former-text-secondary font-normal">
+          <p id={`${id}-hint`} className="text-[13px] text-former-secondary font-normal">
             {hint}
           </p>
         )}

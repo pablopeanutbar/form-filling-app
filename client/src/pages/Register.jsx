@@ -98,7 +98,7 @@ export const Register = () => {
   return (
     <AuthLayout
       title="Create your account"
-      subtitle="Save your information once and reuse it across any online form"
+      subtitle="Keep your details together for your next application."
     >
       <Card>
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
@@ -134,8 +134,8 @@ export const Register = () => {
 
           {/* Password Strength Checklist */}
           {formData.password.length > 0 && (
-            <div className="p-3 bg-former-canvas-muted rounded-lg border border-former-border text-xs space-y-1.5">
-              <p className="font-medium text-former-text-secondary mb-1">Password requirements:</p>
+            <div className="p-3 bg-former-canvas rounded-lg border border-former-border text-xs space-y-1.5">
+              <p className="font-medium text-former-secondary mb-1">Password requirements:</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                 <RequirementItem valid={passwordChecks.length} text="At least 8 characters" />
                 <RequirementItem valid={passwordChecks.uppercase} text="One uppercase letter" />
@@ -172,7 +172,7 @@ export const Register = () => {
         </form>
 
         <div className="mt-6 pt-5 border-t border-former-border text-center">
-          <p className="text-[14px] text-former-text-secondary">
+          <p className="text-[14px] text-former-secondary">
             Already have an account?{' '}
             <Link
               to="/login"
@@ -191,7 +191,7 @@ const RequirementItem = ({ valid, text }) => {
   return (
     <div
       className={`flex items-center gap-1.5 transition-colors ${
-        valid ? 'text-former-success' : 'text-former-text-muted'
+        valid ? 'text-former-success' : 'text-former-muted'
       }`}
     >
       {valid ? <Check className="w-3.5 h-3.5 shrink-0" /> : <X className="w-3.5 h-3.5 shrink-0 opacity-40" />}

@@ -11,7 +11,7 @@ export const ProtectedRoute = ({ children }) => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-former-canvas">
         <Spinner size="lg" className="text-primary" />
-        <p className="mt-4 text-sm text-former-text-secondary font-medium">Verifying session...</p>
+        <p className="mt-4 text-sm text-former-secondary font-medium">Opening your workspace…</p>
       </div>
     );
   }

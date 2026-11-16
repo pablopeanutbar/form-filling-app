@@ -24,11 +24,11 @@ export const Button = React.forwardRef(
       primary:
         'bg-primary text-white hover:bg-primary-hover active:bg-primary-active disabled:bg-former-disabled disabled:text-white/80 shadow-sm',
       secondary:
-        'bg-white text-former-text border border-former-border hover:bg-former-canvas active:bg-former-canvas-muted disabled:text-former-disabled disabled:border-former-border/60',
+        'bg-white text-former-text border border-former-border hover:bg-former-canvas active:bg-former-canvas disabled:text-former-disabled disabled:border-former-border/60',
       destructive:
         'bg-former-error text-white hover:bg-red-700 active:bg-red-800 disabled:bg-former-disabled disabled:text-white/80',
       tertiary:
-        'bg-transparent text-former-text-secondary hover:text-former-text hover:bg-former-canvas-muted disabled:text-former-disabled',
+        'bg-transparent text-former-secondary hover:text-former-text hover:bg-former-canvas disabled:text-former-disabled',
       ghost:
         'bg-transparent text-primary hover:bg-primary-soft disabled:text-former-disabled'
     };

@@ -95,7 +95,7 @@ export const apiClient = async (endpoint, options = {}, isRetry = false) => {
       const errClone = await res.clone().json();
       if (errClone.error?.code === 'CSRF_INVALID' || errClone.error?.code === 'EBADCSRFTOKEN') {
         await fetchCsrfToken();
-        return apiClient(endpoint, options, true);
+        return apiClient(endpoint, { ...options, headers }, true);
       }
     } catch {
       // Continue to standard error handling

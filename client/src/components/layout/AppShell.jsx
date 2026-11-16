@@ -1,79 +1,68 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useRef, useState } from 'react';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { LayoutDashboard, UserRound, History, Settings2, MessageSquare, Menu, ChevronUp, LogOut, ArrowUpRight, FileCheck2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { Button } from '../common/Button.jsx';
-import { LogOut, User, CheckCircle2 } from 'lucide-react';
+import { useUnsaved } from '../../context/UnsavedContext.jsx';
+import { Dialog } from '../common/Dialog.jsx';
+import '../../styles/workspace.css';
 
-export const AppShell = ({ children }) => {
+const navigation = [
+  ['/app', 'Dashboard', LayoutDashboard], ['/app/profile', 'My Information', UserRound],
+  ['/app/history', 'History', History], ['/app/settings', 'Account Settings', Settings2], ['/app/report', 'Report', MessageSquare]
+];
+export function AppShell() {
   const { user, logout } = useAuth();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  const handleLogout = async () => {
-    try {
-      setIsLoggingOut(true);
-      await logout();
-    } catch (err) {
-      console.error('Failed to log out:', err);
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-
-  return (
-    <div className="min-h-screen flex flex-col bg-former-canvas">
-      {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-former-border">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          {/* Brand */}
-          <Link to="/app" className="flex items-center gap-3 group">
-            <div className="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center shadow-xs transition-transform group-hover:scale-105">
-              <svg
-                className="w-5 h-5"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <path d="M9 13h6" />
-                <path d="M9 17h4" />
-              </svg>
-            </div>
-            <span className="text-lg font-semibold tracking-tight text-former-text">formER</span>
-          </Link>
-
-          {/* User Status & Sign Out */}
-          <div className="flex items-center gap-3 sm:gap-4">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-former-canvas-muted rounded-full border border-former-border">
-              <User className="w-3.5 h-3.5 text-former-text-secondary" />
-              <span className="text-xs font-medium text-former-text">{user?.email}</span>
-              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-former-success pl-1 border-l border-former-border">
-                <CheckCircle2 className="w-3 h-3" />
-                Active
-              </span>
-            </div>
-
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={LogOut}
-              isLoading={isLoggingOut}
-              onClick={handleLogout}
-              aria-label="Sign out of formER"
-            >
-              Sign out
-            </Button>
-          </div>
+  const { confirm } = useUnsaved();
+  const location = useLocation();
+  const [mobile, setMobile] = useState(false);
+  const [account, setAccount] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const accountRef = useRef(null);
+  const accountButton = useRef(null);
+  useEffect(() => { setMobile(false); setAccount(false); window.scrollTo(0, 0); }, [location.pathname]);
+  useEffect(() => {
+    const outside = (event) => { if (!accountRef.current?.contains(event.target)) setAccount(false); };
+    const escape = (event) => { if (event.key === 'Escape') { setAccount(false); accountButton.current?.focus(); } };
+    if (account) { document.addEventListener('pointerdown', outside); document.addEventListener('keydown', escape); }
+    return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape); };
+  }, [account]);
+  const signOut = () => confirm(async () => {
+    setBusy(true); setError(''); setMobile(false);
+    try { await logout(); } catch { setError('We couldn’t sign you out. Please try again.'); }
+    finally { setBusy(false); }
+  });
+  const nav = <nav className="workspace-nav" aria-label="Main navigation">{navigation.map(([to, label, Icon]) =>
+    <NavLink key={to} to={to} end={to === '/app'}><Icon size={19} strokeWidth={1.7} /><span>{label}</span></NavLink>)}</nav>;
+  return <div className="workspace">
+    <a className="workspace-skip" href="#workspace-main">Skip to content</a>
+    <aside className="workspace-sidebar">
+      <Link className="workspace-brand" to="/app"><span className="brand-symbol"><FileCheck2 size={22} /></span>formER</Link>
+      <p className="sidebar-caption">Your workspace</p>{nav}
+      <div className="sidebar-bottom">
+        <Link className="website-link" to="/">Visit formER <ArrowUpRight size={16} /></Link>
+        <div className="account-wrap" ref={accountRef}>
+          {account && <div className="account-popover"><p>Signed in as<strong>{user?.email}</strong></p>
+            <Link to="/app/settings"><Settings2 size={16} />Account settings</Link>
+            <button onClick={signOut} disabled={busy}><LogOut size={16} />{busy ? 'Signing out…' : 'Sign out'}</button></div>}
+          <button ref={accountButton} className="account-button" aria-label="Account menu" aria-expanded={account} onClick={() => setAccount(!account)}>
+            <span className="account-avatar">{user?.email?.[0]?.toUpperCase() || 'U'}</span><span><strong>Your account</strong><small>{user?.email}</small></span><ChevronUp size={16} /></button>
         </div>
-      </header>
-
-      {/* Main Workspace Area */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-8">
-        {children}
+      </div>
+    </aside>
+    <div className="workspace-body">
+      <div className="workspace-topbar"><div className="mobile-brand"><FileCheck2 size={20} /><span>formER</span></div>
+        <span className="topbar-caption">A little less typing. A little more living.</span>
+        <button className="icon-button mobile-menu-button" aria-label="Open navigation" onClick={() => setMobile(true)}><Menu size={22} /></button>
+        <span className="topbar-private"><UserRound size={15} />Personal workspace</span></div>
+      <main id="workspace-main" className="workspace-main" tabIndex={-1}>
+        {error && <div className="form-alert" role="alert">{error}<button onClick={signOut}>Try again</button></div>}
+        <Outlet />
       </main>
+      <footer className="workspace-footer"><span>Your information. On your terms.</span><span>formER</span></footer>
     </div>
-  );
-};
+    {mobile && <Dialog title="Your workspace" onClose={() => setMobile(false)}>{nav}
+      <div className="mobile-account"><p>{user?.email}</p><button className="app-button secondary" disabled={busy} onClick={signOut}><LogOut size={16} />Sign out</button></div>
+    </Dialog>}
+  </div>;
+}

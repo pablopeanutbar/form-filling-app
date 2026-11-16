@@ -3,7 +3,7 @@ import { ShieldCheck } from 'lucide-react';
 
 export const AuthLayout = ({ children, title, subtitle }) => {
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-former-canvas-muted px-4 py-8 sm:py-12">
+    <div className="min-h-screen flex flex-col justify-between bg-former-canvas px-4 py-8 sm:py-12">
       {/* Top Brand Header */}
       <div className="w-full max-w-[440px] mx-auto text-center mb-6">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary text-white shadow-sm mb-4">
@@ -24,7 +24,7 @@ export const AuthLayout = ({ children, title, subtitle }) => {
           </svg>
         </div>
         <h1 className="text-2xl font-semibold tracking-tight text-former-text">formER</h1>
-        <p className="text-[14px] text-former-text-secondary mt-1">Intelligent form filling platform</p>
+        <p className="text-[14px] text-former-secondary mt-1">Intelligent form filling platform</p>
       </div>
 
       {/* Main Form Container */}
@@ -32,7 +32,7 @@ export const AuthLayout = ({ children, title, subtitle }) => {
         {(title || subtitle) && (
           <div className="text-center mb-6">
             {title && <h2 className="text-xl font-semibold text-former-text">{title}</h2>}
-            {subtitle && <p className="text-[14px] text-former-text-secondary mt-1.5">{subtitle}</p>}
+            {subtitle && <p className="text-[14px] text-former-secondary mt-1.5">{subtitle}</p>}
           </div>
         )}
         {children}
@@ -40,9 +40,9 @@ export const AuthLayout = ({ children, title, subtitle }) => {
 
       {/* Security & System Trust Footer */}
       <footer className="w-full max-w-[440px] mx-auto text-center mt-8 pt-4">
-        <div className="inline-flex items-center gap-1.5 text-xs text-former-text-muted">
+        <div className="inline-flex items-center gap-1.5 text-xs text-former-muted">
           <ShieldCheck className="w-3.5 h-3.5 text-former-success" />
-          <span>Secure HttpOnly cookie session &bull; CSRF protected</span>
+          <span>Your information, ready when you need it.</span>
         </div>
       </footer>
     </div>

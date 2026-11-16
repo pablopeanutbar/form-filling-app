@@ -68,14 +68,9 @@ export const AuthProvider = ({ children }) => {
    * Terminate active session
    */
   const logout = async () => {
-    try {
-      await authApi.logoutUser();
-    } catch (err) {
-      console.error('Logout error:', err);
-    } finally {
-      setUser(null);
-      setError(null);
-    }
+    await authApi.logoutUser();
+    setUser(null);
+    setError(null);
   };
 
   const value = {

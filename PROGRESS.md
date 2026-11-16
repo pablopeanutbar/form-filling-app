@@ -1,7 +1,50 @@
 # formER — Development Progress Tracking
 
 ## Current Development Milestone
-**Public Marketing Landing Page (Adapted from Reference Template) (Completed & Verified)**
+**Premium Application UI Sprint, Part 1 — implemented; automated checks passed; browser visual acceptance pending (2026-11-16)**
+
+### Implemented in this sprint
+- Responsive application shell: five agreed destinations, desktop sidebar, mobile navigation dialog, account menu, visible logout failure/retry, and page-level error recovery.
+- Dashboard reads the authenticated profile API. Four explicitly explained checkpoints cover name/birth date, contact email/phone, permanent address essentials, and at least one qualification. No invented activity, verification, or extension connection status.
+- My Information editors for personal details, contact information, separate permanent/correspondence addresses, education, and professional skills, links, and multiple work roles.
+- Education uses the existing record-specific create, update, and delete endpoints. Deletion requires confirmation; failed deletion keeps the record.
+- Section-only PATCH requests, explicit optional clearing, client-side date/number/grade/link validation, inline errors, saved feedback, failed-save retention, and duplicate-submit prevention.
+- Unsaved edits are guarded on internal navigation, browser Back, cancel, logout, and page unload. No personal drafts are persisted to browser storage.
+- History and Report explain that their services are unavailable. Account Settings shows real account details and accurately describes missing controls.
+- Plain-language authentication copy and accessible password visibility control. Failed logout no longer falsely clears local authentication. CSRF retry preserves JSON Content-Type.
+- Application styles are isolated from the public landing. Editor and shell code are split into separate bundles. No dependencies, backend schemas, extension code, or matching logic were added or changed.
+
+### Verification and limits
+- Frontend auth/service suite: 9 tests passed.
+- Profile validation/API contract suite: 6 tests passed, including optional nulls, numeric zero, sibling-address preservation, invalid grades/dates, record identity, and CSRF JSON retry.
+- React component suite: 13 tests passed in jsdom with synthetic in-memory API responses validated against the existing backend Zod schemas. Covers editing, saving, retry, independent education records, deletion confirmation/failure, professional data, unsaved navigation/Back/unload, and logout success/failure.
+- Production Vite build passed. These checks do not establish real MongoDB persistence or browser rendering quality.
+- **Visual acceptance is incomplete:** attempted in-app browser access to the isolated localhost test server timed out. Windows Computer Use then stopped because it could not reliably determine the current Chrome URL for policy enforcement. No further browser interaction was attempted. No screenshots were captured.
+- 390px, 768px, 1440px, and 1920px layouts, native dialog focus, mobile navigation, reduced motion, and landing route/animation regression still require real-browser inspection. Responsive CSS is implemented, not visually certified.
+- LandingPage.jsx, its font loading and global stylesheet, LANDING_DESIGN.md, and all backend/extension files remain unchanged.
+
+### Modified and added files
+- Routing and pages: `client/src/App.jsx`, `pages/Home.jsx`, `pages/MyInformation.jsx`, `pages/AccountPages.jsx`, `pages/Login.jsx`, `pages/Register.jsx`.
+- State/API: `context/AuthContext.jsx`, `context/ProfileContext.jsx`, `context/UnsavedContext.jsx`, `api/client.js`, `api/profile.js`.
+- Components: `components/layout/AppShell.jsx`, `AuthLayout.jsx`, `components/routing/ProtectedRoute.jsx`, `components/common/Button.jsx`, `Input.jsx`, `Dialog.jsx`, `Page.jsx`, and `components/profile/{Fields,EditForm,Education,Professional}.jsx`.
+- Design/validation: `client/src/styles/workspace.css`, `client/src/utils/profile.js`.
+- Tests: `client/tests/profile.test.js`, `workspace.test.js`, `helpers/ui-server.mjs`, `README.md`; `client/package.json` test command.
+
+### Unresolved engineering issues (outside this UI sprint)
+- Backend matching can confuse parent/applicant email and marks/percentage; destination constraints are not fully validated.
+- Backend profile validation weaknesses remain. Client validation does not repair or secure those server boundaries.
+- Production session-secret configuration and broader account recovery/privacy controls remain outstanding.
+- Extension is a detector only: account authorization, matching transport, review, and actual filling remain unimplemented. The older landing milestone descriptions below are historical, not evidence of those capabilities.
+- History/feedback services and export/account deletion remain absent. Gemini remains optional future work.
+- Professional work roles follow the existing whole-array PATCH contract; server record IDs may be regenerated on replacement. Education retains its independent record endpoints.
+
+### Next step
+Complete browser acceptance at all four requested widths using the isolated fixture workflow in `client/tests/README.md`, capture screenshots, and verify against an isolated real backend test account before marking this milestone fully complete. Then return to the separately scoped matching/security issues. No unrelated milestone has been started.
+
+---
+
+## Historical milestone: Public Marketing Landing Page
+The following records describe the preceding milestone and its reported checks; they were not rerun as part of this UI sprint.
 
 ---
 

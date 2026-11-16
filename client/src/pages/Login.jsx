@@ -80,7 +80,7 @@ export const Login = () => {
   return (
     <AuthLayout
       title="Sign in to formER"
-      subtitle="Access your verified profile and intelligent autofill settings"
+      subtitle="Welcome back. Your saved details are waiting."
     >
       <Card>
         <form onSubmit={handleSubmit} className="space-y-5" noValidate>
@@ -126,7 +126,7 @@ export const Login = () => {
         </form>
 
         <div className="mt-6 pt-5 border-t border-former-border text-center">
-          <p className="text-[14px] text-former-text-secondary">
+          <p className="text-[14px] text-former-secondary">
             Don't have an account?{' '}
             <Link
               to="/register"
