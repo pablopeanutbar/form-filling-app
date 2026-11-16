@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { Button } from '../common/Button.jsx';
 import { LogOut, User, CheckCircle2 } from 'lucide-react';
@@ -24,8 +25,8 @@ export const AppShell = ({ children }) => {
       <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-former-border">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           {/* Brand */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center shadow-xs">
+          <Link to="/app" className="flex items-center gap-3 group">
+            <div className="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center shadow-xs transition-transform group-hover:scale-105">
               <svg
                 className="w-5 h-5"
                 viewBox="0 0 24 24"
@@ -42,7 +43,7 @@ export const AppShell = ({ children }) => {
               </svg>
             </div>
             <span className="text-lg font-semibold tracking-tight text-former-text">formER</span>
-          </div>
+          </Link>
 
           {/* User Status & Sign Out */}
           <div className="flex items-center gap-3 sm:gap-4">

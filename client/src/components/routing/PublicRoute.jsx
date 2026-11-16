@@ -16,8 +16,8 @@ export const PublicRoute = ({ children }) => {
   }
 
   if (isAuthenticated) {
-    // If the user arrived here from a protected page, navigate back there; otherwise go to root
-    const origin = location.state?.from?.pathname || '/';
+    // If the user arrived here from a protected page, navigate back there; otherwise go to authenticated app
+    const origin = location.state?.from?.pathname || '/app';
     return <Navigate to={origin} replace />;
   }
 

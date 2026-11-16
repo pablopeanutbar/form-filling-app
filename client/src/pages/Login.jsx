@@ -63,7 +63,7 @@ export const Login = () => {
         password: formData.password
       });
 
-      const redirectPath = location.state?.from?.pathname || '/';
+      const redirectPath = location.state?.from?.pathname || '/app';
       navigate(redirectPath, { replace: true });
     } catch (err) {
       const message =

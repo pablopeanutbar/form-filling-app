@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext.jsx';
 import { ProtectedRoute } from './components/routing/ProtectedRoute.jsx';
 import { PublicRoute } from './components/routing/PublicRoute.jsx';
 import { AppShell } from './components/layout/AppShell.jsx';
+import { LandingPage } from './pages/LandingPage.jsx';
 import { Login } from './pages/Login.jsx';
 import { Register } from './pages/Register.jsx';
 import { Home } from './pages/Home.jsx';
@@ -13,7 +14,10 @@ export const App = () => {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* Public routes (redirect to / if already authenticated) */}
+          {/* Public Landing Page */}
+          <Route path="/" element={<LandingPage />} />
+
+          {/* Public Auth routes (redirects to /app if already authenticated) */}
           <Route
             path="/login"
             element={
@@ -31,9 +35,9 @@ export const App = () => {
             }
           />
 
-          {/* Protected routes (redirect to /login if unauthenticated) */}
+          {/* Protected App routes (redirects to /login if unauthenticated) */}
           <Route
-            path="/"
+            path="/app"
             element={
               <ProtectedRoute>
                 <AppShell>
@@ -42,6 +46,9 @@ export const App = () => {
               </ProtectedRoute>
             }
           />
+
+          {/* Convenience alias for dashboard */}
+          <Route path="/dashboard" element={<Navigate to="/app" replace />} />
 
           {/* Catch-all fallback */}
           <Route path="*" element={<Navigate to="/" replace />} />

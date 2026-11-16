@@ -1,153 +1,179 @@
 # formER — Development Progress Tracking
 
 ## Current Development Milestone
-**Milestone 6A: Frontend Foundation & Authentication (Completed & Verified)**
+**Public Marketing Landing Page (Adapted from Reference Template) (Completed & Verified)**
 
 ---
 
-## 1. Milestone Status: Frontend Foundation & Authentication
+## 1. Milestone Status: Public Marketing Landing Page
 
 ### Status: Complete & Verified
-The production-ready React client foundation and full client-side authentication workflow have been implemented inside `client/`. The web application cleanly integrates with the existing Express backend, honoring the established session-cookie architecture, double-submit CSRF protection, and visual design specifications defined in `DESIGN.md`.
+As requested, Milestone 6B was paused to build formER's public marketing landing page (`/`), performing a high-fidelity visual and motion adaptation of the React/GSAP reference template (`references/alto-coffee-template/`) according to `ANTIGRAVITY_LANDING_PROMPT.md` and `LANDING_DESIGN.md`.
+
+The authenticated application was cleanly relocated to `/app` (with `/dashboard` alias redirect), preserving all existing session restoration, authentication flows (`/login`, `/register`), backend endpoints, and protected routes.
 
 ### Completed Features:
 
-#### Part 1 — Frontend Tooling & Architecture
-- **Framework**: React 18 with Vite using JavaScript ES Modules (no TypeScript, strictly following project rules).
-- **Styling**: Tailwind CSS configured with exact design tokens from `DESIGN.md`:
-  - Brand Primary: Apple-inspired `#0071E3`, hover `#0066CC`, active `#005BB5`, soft background `#EAF4FF`.
-  - Canvas & Surfaces: `#FFFFFF`, `#F5F5F7`, `#FAFAFC`.
-  - Radii: 9999px for pill action buttons, 8px for form inputs, 14px for cards.
-  - Typography: System Inter fallback stack with sentence-case typography and tabular numerals where appropriate.
-- **Routing**: React Router v6 with declarative public and protected route hierarchies.
-- **Vite Proxy**: Configured local dev proxy `/api` pointing to `http://localhost:5000` for seamless local cookie propagation.
+#### Part 1 — Visual & Motion Adaptation (`LandingPage.jsx`)
+- **Atmospheric Hero Layer Descent**:
+  - Oversized, tight-tracking staggered headline ("FORMS / FILLED / INSTANTLY") in variable-width Archivo font.
+  - Procedural atmospheric clouds and film grain SVG filter.
+  - Layered scroll parallax with depth scaling, atmospheric veil fade-out, and camera landing onto the primary form interface preview.
+  - Truthful altitude / step journey rail indicator (01 / 03: Profile Stored → Field Match → Verified Fill).
+- **Core Feature Section ("ONCE SAVED. READY TO FILL.")**:
+  - Full-viewport typography with expanding radial disc reveal.
+  - Interactive 3D pointer-leaning card stack (`ProfileStackArt`) displaying verified user profile sections (Personal, Contact, Academic, Address).
+  - Floating badge highlights with Apple-blue accents (`#0071E3`).
+- **3-Destination Zoom & Vector Morphing Sequence**:
+  - Integrated GSAP `MorphSVGPlugin` with `ScrollTrigger`.
+  - Equirectangular interface matrix canvas with 3 real-world portals:
+    1. *Enterprise Job Application* (Workday / Greenhouse style: identity, work history, resume parsing).
+    2. *Government & University Grants* (Scholarship & aid: identity, academic index, family particulars).
+    3. *Official Registration & Admissions* (State testing & licensing: addresses, verified qualifications).
+  - Camera zooms, pans, and morphs vector paths seamlessly across scroll positions.
+- **Floating Parallax Document Cards**:
+  - Staggered floating cards (`ProfileMasterCard`) demonstrating canonical profile categories drifting in 3D parallax space around a sticky center caption.
+- **6-Step Horizontal Journey Strip**:
+  - Vertical-scroll-driven horizontal pinning strip detailing the end-to-end user workflow:
+    1. *Account Vault*: Secure local session profile initialization.
+    2. *Field Extraction*: Chrome extension detects form inputs in active tab.
+    3. *Deterministic Mapping*: Canonical registry matches unambiguous inputs.
+    4. *Semantic Embeddings*: Local MiniLM sentence matching for ambiguous labels.
+    5. *User Verification*: In-browser confirmation banner for low-confidence fields.
+    6. *Precision Autofill*: Synthetic keystroke and change dispatching into target inputs.
+- **Interactive Live Autofill Simulator**:
+  - Embedded interactive preview allowing prospective users to test formER's matching engine across 3 scenarios:
+    1. Job Application Portal
+    2. Scholarship Application
+    3. Official State Registration
+  - "Autofill with formER" action triggers animated progressive field completion with confidence badges, match reasons, and visual fill states.
+- **Dual-Core Architecture Comparison**:
+  - Side-by-side comparison cards and comprehensive feature matrix:
+    - *Web Vault*: Profile creation, qualification records, encryption settings.
+    - *Chrome Extension*: Passive form detection, context menu actions, precision filling.
+- **Self-Drawing Vector Footer & Attribution**:
+  - Self-drawing SVG path animation on footer scroll entrance.
+  - Explicit MIT license attribution to Kedhareswer Naidu for the Alto Coffee Template.
+  - Responsive navigation links and back-to-top scroll trigger.
 
-#### Part 2 — API & Security Layer (`client/src/api/`)
-- **Centralized Fetch Client (`client.js`)**:
-  - Automatically includes credentials (`credentials: 'include'`) for HttpOnly session cookie transmission.
-  - Automatically fetches and caches the double-submit CSRF token before state-changing requests (`POST`, `PUT`, `PATCH`, `DELETE`).
-  - Injects `x-csrf-token` header seamlessly into outgoing state-changing requests.
-  - Transparent recovery mechanism: if a request receives HTTP 403 `CSRF_INVALID`, the client fetches a fresh CSRF token and retries the request once before reporting failure.
-  - Normalizes errors from server JSON responses (`{ error: { code, message, details } }`).
-  - **Zero LocalStorage Credentials**: Session cookies and in-memory CSRF tokens only; sensitive tokens or credentials are never stored in `localStorage` or `sessionStorage`.
-- **Auth Service (`auth.js`)**:
-  - `loginUser({ email, password })`
-  - `registerUser({ email, password })`
-  - `logoutUser()`
-  - `getCurrentUser()`
-  - `getCsrfToken()`
+#### Part 2 — Routing & Architecture Isolation
+- **Route Reorganization (`App.jsx`)**:
+  - `/`: Public marketing landing page.
+  - `/app`: Authenticated application shell & overview (formerly `/`).
+  - `/dashboard`: Backward-compatible redirect to `/app`.
+  - `/login` & `/register`: Preserved public auth routes with redirects to `/app` upon successful session authentication.
+- **Styling Isolation**:
+  - Self-contained `.ac-*` stylesheet scoped directly inside `LandingPage.jsx`, completely eliminating CSS collisions with Tailwind utility classes in `/app`.
+  - Google Fonts `Archivo` and `Jost` integrated into `client/index.html` alongside `Inter`.
 
-#### Part 3 — State Management & Route Protection
-- **Auth Context (`AuthContext.jsx`)**:
-  - Restores active sessions on initial mount by calling `GET /api/v1/auth/me`.
-  - Handles non-blocking session verification with smooth loading state.
-  - Coordinates login, registration, and logout workflows.
-  - Provides `useAuth()` custom hook across the application tree.
-- **Route Guards**:
-  - `ProtectedRoute.jsx`: Verifies authenticated state; displays a centered spinner while loading; redirects unauthenticated visitors to `/login` with return location state.
-  - `PublicRoute.jsx`: Redirects already authenticated visitors directly to `/` (or their previous intended destination).
-
-#### Part 4 — Reusable Design System Components (`client/src/components/common/`)
-- **`Button.jsx`**: Pill-shaped action button with standard 44px height, hover/active color transitions, keyboard focus rings, Lucide icon support, and integrated `Spinner` for loading states while maintaining layout dimensions.
-- **`Input.jsx`**: Form input with labels placed persistently above the field, 44px height, 8px radius, visible 1px borders, 2px focus ring, inline error/hint feedback, and accessible show/hide password toggle.
-- **`Card.jsx`**: Contained white surface with 14px border radius, subtle border, and card elevation.
-- **`Alert.jsx`**: Accessible notification component for error, success, warning, and info banners with matching Lucide icons.
-- **`Spinner.jsx`**: Lightweight, smooth SVG spinner.
-
-#### Part 5 — Pages & Application Shell
-- **`AuthLayout.jsx`**: Clean centered authentication container (440px max width) with formER logo mark, title, and session security status footer.
-- **`Login.jsx`**: Sign-in form with email/password validation, clear backend error rendering, and navigation to registration.
-- **`Register.jsx`**: Account creation form with live visual checklist validating all 5 backend password criteria (8+ chars, uppercase, lowercase, number, special char), password confirmation matching, and automatic seamless post-registration login.
-- **`AppShell.jsx`**: Authenticated application header displaying formER branding, authenticated user email, account status, and Sign out control.
-- **`Home.jsx`**: Authenticated overview screen displaying real account credentials, session security specifications, and architecture module status (no fabricated analytics or mock data).
+#### Part 3 — Targeted Typography Refinement
+- **Desktop Viewport Headline Fit**:
+  - Replaced oversized font clamps (`clamp(60px, 12cqi, 200px)` and `clamp(70px, 13cqi, 200px)`) that broke awkward character fragments at ~1600px desktop.
+  - Refined `.ac-crop-title` ("ONCE SAVED. READY TO FILL.") to `clamp(34px, 7.2cqi, 126px)` with max-stage width `min(1200px, 92cqi)`.
+  - Refined `.ac-display` ("YOUR INFO. STORED ONCE." and "WATCH IT ASSIST YOU.") to `clamp(34px, 7.8cqi, 136px)`.
+- **Atomic Non-Breaking Word Wrappers**:
+  - Refactored `chars()` helper to group character spans inside `<span className="ac-word">` with `display: inline-block; white-space: nowrap;`.
+  - Characters inside words are strictly non-breaking, completely preventing individual letters or punctuation marks from orphaning.
+  - Preserved individual letter `ac-crop-char` and `ac-display-char` spans and GSAP character rise / stagger animations.
+  - Desktop lines locked to single intentional rows with `.ac-line { white-space: nowrap; }`, relaxing to balanced text on narrow mobile containers.
+- **Dynamic ScrollTrigger Refresh**:
+  - Attached `document.fonts.ready` listener to invoke `ScrollTrigger.refresh()` as soon as variable-width `Archivo` and `Jost` font glyphs finish rendering.
 
 ---
 
 ## 2. Modified & Created Files
 
-### Created Files in `client/`:
-- `client/package.json`: Client dependencies and build scripts.
-- `client/vite.config.js`: Vite build configuration and `/api` proxy setup.
-- `client/postcss.config.js`: PostCSS with Tailwind and Autoprefixer.
-- `client/tailwind.config.js`: Complete `DESIGN.md` design tokens.
-- `client/.env` and `client/.env.example`: Frontend environment variables.
-- `client/index.html`: Application entry document with Inter font and favicon.
-- `client/public/favicon.png`: FormER brand favicon.
-- `client/src/index.css`: Tailwind layer directives and CSS variables.
-- `client/src/utils/cn.js`: Tailwind class merging utility.
-- `client/src/api/client.js`: Double-submit CSRF and credentials-aware fetch client.
-- `client/src/api/auth.js`: Auth API service layer.
-- `client/src/context/AuthContext.jsx`: Authentication state context and provider.
-- `client/src/components/common/Spinner.jsx`: Reusable loading spinner.
-- `client/src/components/common/Button.jsx`: Reusable 44px pill button.
-- `client/src/components/common/Input.jsx`: Form input with label and password toggle.
-- `client/src/components/common/Card.jsx`: Reusable 14px radius surface card.
-- `client/src/components/common/Alert.jsx`: Reusable accessible status banner.
-- `client/src/components/layout/AuthLayout.jsx`: Centered auth container and brand header.
-- `client/src/components/layout/AppShell.jsx`: Authenticated header with user email and logout.
-- `client/src/components/routing/ProtectedRoute.jsx`: Authenticated route guard.
-- `client/src/components/routing/PublicRoute.jsx`: Unauthenticated route guard.
-- `client/src/pages/Login.jsx`: Login page.
-- `client/src/pages/Register.jsx`: Registration page with live password strength checklist.
-- `client/src/pages/Home.jsx`: Authenticated overview.
-- `client/src/App.jsx`: Application routes and providers.
-- `client/src/main.jsx`: DOM root mounting script.
-- `client/tests/auth.test.js`: 9 automated frontend client unit tests.
+### Created Files:
+- `client/src/pages/LandingPage.jsx`: Full 9-section high-fidelity marketing landing page.
+- `client/tests/landing.e2e.test.js`: Real Chrome CDP automated test suite verifying layout, responsiveness, overflow, and interactive autofill preview.
+- `client/tests/verify-typography.js`: Automated Chrome CDP suite verifying 15 heading/viewport permutations with 100% 1-row layout and screenshot capture.
 
 ### Modified Files:
-- `server/src/app.js`: Added local `127.0.0.1` origins in development to ensure seamless cross-origin requests alongside `localhost:5173`.
+- `client/package.json`: Added `gsap` dependency.
+- `client/index.html`: Added Google Fonts (`Archivo`, `Jost`).
+- `client/src/App.jsx`: Configured public `/` landing route and relocated authenticated dashboard to `/app`.
+- `client/src/components/routing/PublicRoute.jsx`: Updated default authenticated redirect target to `/app`.
+- `client/src/pages/Login.jsx`: Updated post-login redirect to `/app`.
+- `client/src/pages/Register.jsx`: Updated post-registration redirect to `/app`.
+- `client/src/components/layout/AppShell.jsx`: Linked brand mark to `/app`.
 
 ---
 
 ## 3. Verified Test Results
 
-### Frontend Client Tests (`npm --prefix client test`):
+### Landing Page E2E Suite (`node --test client/tests/landing.e2e.test.js`):
+- **Total Tests**: 5
+- **Passed**: 5
+- **Failed**: 0
+- Suites passing:
+  1. Desktop viewport (1440×900): All 9 sections render, zero horizontal overflow (`scrollWidth <= clientWidth`).
+  2. Tablet viewport (768×1024): Clean responsive layout, zero horizontal overflow.
+  3. Mobile viewport (390×844): Mobile burger navigation opens and closes, zero horizontal overflow.
+  4. Interactive Autofill Demo: Executed live fill sequence; fields populated with confidence badges.
+  5. Router Links: "Open Vault" and "Get Started" navigate cleanly to `/login` and `/register`.
+
+### Typography Verification Suite (`node client/tests/verify-typography.js`):
+- **Total Permutations Tested**: 15 (5 viewports × 3 headlines)
+- **1920px Desktop**: 100% 1-row layout per phrase, zero word/character wrap, zero overflow.
+- **1600px Desktop**: 100% 1-row layout per phrase, zero word/character wrap, zero overflow.
+- **1366px Laptop**: 100% 1-row layout per phrase, zero word/character wrap, zero overflow.
+- **768px Tablet**: 100% 1-row layout per phrase, zero word/character wrap, zero overflow.
+- **390px Mobile**: 100% 1-row layout per phrase, zero word/character wrap, zero overflow.
+- **Typography Screenshots Captured**:
+  - `screenshots/typography/1920-desktop-crop-title.png`, `1920-desktop-display-info.png`, `1920-desktop-display-demo.png`
+  - `screenshots/typography/1600-desktop-crop-title.png`, `1600-desktop-display-info.png`, `1600-desktop-display-demo.png`
+  - `screenshots/typography/1366-laptop-crop-title.png`, `1366-laptop-display-info.png`, `1366-laptop-display-demo.png`
+  - `screenshots/typography/768-tablet-crop-title.png`, `768-tablet-display-info.png`, `768-tablet-display-demo.png`
+  - `screenshots/typography/390-mobile-crop-title.png`, `390-mobile-display-info.png`, `390-mobile-display-demo.png`
+
+### General Landing Page Screenshots Captured:
+- `hero-desktop-1440x900.png` (Hero atmospheric section with staggered typography)
+- `feature-desktop-1440x900.png` (Oversized feature typography & card stack)
+- `demo-interactive-prefill.png` (Interactive simulator before fill)
+- `demo-interactive-filled.png` (Interactive simulator after autofill dispatch)
+- `tablet-768x1024.png` (Tablet viewport layout)
+- `mobile-390x844.png` (Mobile viewport layout)
+- `mobile-menu-390x844.png` (Mobile drawer navigation)
+
+### Frontend Client Unit Tests (`npm --prefix client test`):
 - **Total Tests**: 9
 - **Passed**: 9
 - **Failed**: 0
-1. `fetchCsrfToken` retrieves and caches CSRF token.
-2. `apiClient` automatically injects `x-csrf-token` header on state-changing requests.
-3. `registerUser` service sends correct structured payload.
-4. `loginUser` service authenticates and clears stale CSRF cache.
-5. `logoutUser` service invalidates session and clears local CSRF state.
-6. `getCurrentUser` retrieves authenticated user profile (`/me`).
-7. `apiClient` automatically recovers on 403 `CSRF_INVALID` with retry.
-8. Password validation criteria correctly verifies strength rules.
-9. Email validation regex catches invalid formats.
 
 ### Frontend Production Build (`npm --prefix client run build`):
-- **Modules Transformed**: 1,594
-- **Exit Code**: 0 (Clean compilation)
+- **Modules Transformed**: 1,602
+- **Exit Code**: 0 (Clean compilation in 2.94s)
 - **Output Bundles**:
-  - `dist/index.html`: 0.89 kB (gzip: 0.49 kB)
-  - `dist/assets/index-C3UXrjD0.css`: 18.81 kB (gzip: 4.34 kB)
-  - `dist/assets/index-DDwtCA6m.js`: 217.64 kB (gzip: 68.63 kB)
+  - `dist/index.html`: 1.25 kB
+  - `dist/assets/index-*.css`: 35.80 kB
+  - `dist/assets/index-*.js`: 319.46 kB
 
 ### Backend Test Suite (`npm --prefix server test`):
 - **Total Test Suites**: 8
 - **Total Tests**: 60
 - **Passed**: 60
 - **Failed**: 0
-- Suites passing:
-  1. `tests/health.test.js` (4 tests)
-  2. `tests/error.test.js` (3 tests)
-  3. `tests/db.test.js` (2 tests)
-  4. `tests/auth.test.js` (11 tests)
-  5. `tests/profile.test.js` (12 tests)
-  6. `tests/matching.test.js` (13 tests)
-  7. `tests/extension.test.js` (12 tests)
-  8. `tests/chrome-extension.e2e.test.js` (3 tests)
 
 ---
 
 ## 4. Known Issues & Limitations
-- **Full Dashboard & Profile Editing**: The full multi-section profile editor (personal, contact, addresses, education) will be implemented in subsequent milestones; the authenticated shell currently displays account identity and security status.
-- **Password Reset**: Backend password reset endpoints have not yet been introduced; "Forgot password" links are omitted per `DESIGN.md` rules until the backend flow exists.
+- **Profile Management UI (Milestone 6B)**: Temporarily paused during landing page implementation; profile editing forms will be implemented next.
+- **Extension Store Packaging**: Extension download links in the landing page direct to `/register` or GitHub setup guide until the extension is published on the Chrome Web Store.
 
 ---
 
 ## 5. Next Recommended Implementation Step
-**Milestone 6B: User Profile Management UI (My Information)**
+**Resume Milestone 6B: User Profile Management UI (My Information)**
 - Build the profile editing interface to manage Personal, Contact, Address, and Education qualifications.
-- Enable users to populate the canonical profile store directly from the web application.
+- Enable users to populate the canonical profile store directly from `/app/profile`.
 - Integrate validation feedback matching backend Zod schemas.
+
+---
+
+## 6. Previous Milestones (Archived Summary)
+- **Milestone 1**: Backend Foundation (Express, MongoDB, Error handling, Health check).
+- **Milestone 2**: User Authentication (Argon2id, Mongo session store, CSRF protection, `/auth/*`).
+- **Milestone 3**: User Profile Management (Mongoose Profile schema, Zod validation, `/profile/*`).
+- **Milestone 4**: Intelligent Field Matching Engine (Canonical registry, Rule-based matching, MiniLM semantic inference, Decision engine).
+- **Milestone 5**: Chrome Extension Foundation (Manifest V3, Content script form detection & extraction, Matching contract alignment).
+- **Milestone 6A**: Frontend Foundation & Authentication (React, Vite, Tailwind CSS, Session restoration, CSRF management, Auth forms).

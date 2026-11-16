@@ -82,7 +82,7 @@ export const Register = () => {
         password: formData.password
       });
 
-      navigate('/', { replace: true });
+      navigate('/app', { replace: true });
     } catch (err) {
       const message =
         err.details?.email?.[0] ||
