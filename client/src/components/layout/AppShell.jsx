@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, UserRound, History, Settings2, MessageSquare, Menu, ChevronUp, LogOut, ArrowUpRight, FileCheck2 } from 'lucide-react';
+import { LayoutDashboard, UserRound, History, Settings2, MessageSquare, Menu, ChevronUp, LogOut, FileCheck2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useUnsaved } from '../../context/UnsavedContext.jsx';
 import { Dialog } from '../common/Dialog.jsx';
+import { FloatingPathsBackground } from '../ui/floating-paths';
 import '../../styles/workspace.css';
 
 const navigation = [
@@ -40,7 +41,6 @@ export function AppShell() {
       <Link className="workspace-brand" to="/app"><span className="brand-symbol"><FileCheck2 size={22} /></span>formER</Link>
       <p className="sidebar-caption">Your workspace</p>{nav}
       <div className="sidebar-bottom">
-        <Link className="website-link" to="/">Visit formER <ArrowUpRight size={16} /></Link>
         <div className="account-wrap" ref={accountRef}>
           {account && <div className="account-popover"><p>Signed in as<strong>{user?.email}</strong></p>
             <Link to="/app/settings"><Settings2 size={16} />Account settings</Link>
@@ -52,10 +52,9 @@ export function AppShell() {
     </aside>
     <div className="workspace-body">
       <div className="workspace-topbar"><div className="mobile-brand"><FileCheck2 size={20} /><span>formER</span></div>
-        <span className="topbar-caption">A little less typing. A little more living.</span>
-        <button className="icon-button mobile-menu-button" aria-label="Open navigation" onClick={() => setMobile(true)}><Menu size={22} /></button>
-        <span className="topbar-private"><UserRound size={15} />Personal workspace</span></div>
-      <main id="workspace-main" className="workspace-main" tabIndex={-1}>
+        <button className="icon-button mobile-menu-button" aria-label="Open navigation" onClick={() => setMobile(true)}><Menu size={22} /></button></div>
+      <main id="workspace-main" className="workspace-main relative isolate" tabIndex={-1}>
+        <FloatingPathsBackground className="pointer-events-none absolute inset-0 -z-10" position={-1} />
         {error && <div className="form-alert" role="alert">{error}<button onClick={signOut}>Try again</button></div>}
         <Outlet />
       </main>

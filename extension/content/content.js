@@ -389,8 +389,9 @@
       let optionsTruncated = false;
       if (type === 'select') {
         const opts = extractSelectOptions(el);
-        optionsTruncated = opts.length > 50;
-        if (opts.length > 0) options = opts.slice(0, 50);
+        const limit = /date of birth|birth date|birthdate|\bdob\b|birth.?year/i.test([label, section, name, id].join(' ')) ? 150 : 50;
+      optionsTruncated = opts.length > limit;
+        if (opts.length > 0) options = opts.slice(0, limit);
       }
 
       const constraints = { inputType: (el.getAttribute('type') || type).toLowerCase(), multiple: Boolean(el.multiple) };

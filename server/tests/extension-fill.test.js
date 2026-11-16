@@ -60,12 +60,13 @@ test('writes native text, number, email, telephone, date and textarea values wit
 test('validates select options, radio groups, number ranges and overwrite approval', async () => {
   await withForm('<input id="n" type="number" min="2" max="8" step="2"><input id="t" value="Existing"><select id="s"><option value="">Choose</option><option value="A">Alpha</option><option value="B" disabled>Beta</option></select><fieldset><legend>Choice</legend><input id="r" name="group" value="X" type="radio"><input id="r2" name="group" value="Y" type="radio"></fieldset>', async (window, fill) => {
     const doc = window.document;
-    assert.ok((await fill({ n: '3', t: 'New', s: 'B' })).results.every(({ status }) => status === 'skipped'));
+    assert.deepEqual(Array.from((await fill({ n: '3', t: 'New', s: 'B' })).results, ({ status }) => status), ['skipped', 'conflict', 'skipped']);
     assert.equal(doc.getElementById('t').value, 'Existing');
     assert.ok((await fill({ t: 'New', s: 'A', r: 'Y' }, { overwrite: true })).results.every(({ status }) => status === 'filled'));
     assert.equal(doc.getElementById('s').value, 'A');
     assert.equal(doc.getElementById('r2').checked, true);
-    assert.equal((await fill({ r: 'X' })).results[0].status, 'skipped');
+    assert.equal((await fill({ r: 'X' })).results[0].status, 'conflict');
+    assert.ok((await fill({ t: 'New', s: 'A', r: 'Y' })).results.every(({ status }) => status === 'already_correct'));
   });
 });
 
@@ -260,6 +261,27 @@ test('panel selects matched fields in bulk and sends review entries only through
     $('fill').click();
     await settle();
     assert.deepEqual(Array.from(requests[1].proposals, (proposal) => proposal.fieldId), ['c']);
-    assert.match($('fill-results').textContent, /1 skipped/);
+    assert.match($('fill-results').textContent, /1 need attention/);
+    assert.match($('fill-results').querySelector('details').textContent, /Existing answer/);
   } finally { window.close(); }
+});
+test('repeat fill compares formatted phone and number values without dispatching extra events', async () => {
+  await withForm('<label for="p">Cell Phone</label><input id="p" value="+1 (555) 000-1234"><input id="n" type="number" value="2.0">', async (window, fill) => {
+    let events = 0;
+    window.document.addEventListener('input', () => { events++; });
+    const already = await fill({ p: '+15550001234', n: '2' });
+    assert.deepEqual(Array.from(already.results, ({ status }) => status), ['already_correct', 'already_correct']);
+    assert.equal((await fill({ p: '15550001234' })).results[0].status, 'conflict');
+    assert.equal(events, 0);
+  });
+});
+
+test('fills a split DOB prompt with value zero and protects the actual date on later attempts', async () => {
+  const html = '<div><div>Date Of Birth</div><div><select id="m" name="66mm"><option value="0">Month</option><option value="1">Jan</option><option value="2">Feb</option></select></div></div>';
+  await withForm(html, async (window, fill) => {
+    assert.equal((await fill({ m: '2' })).results[0].status, 'filled');
+    assert.equal(window.document.getElementById('m').value, '2');
+    assert.equal((await fill({ m: '2' })).results[0].status, 'already_correct');
+    assert.equal((await fill({ m: '1' })).results[0].status, 'conflict');
+  });
 });

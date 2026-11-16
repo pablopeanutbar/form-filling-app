@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, Chrome, Copy, Download, FileCheck2, Globe, Hand, Info, ListFilter, ScanLine, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
+import { FloatingPathsBackground } from '../components/ui/floating-paths';
 import '../styles/extension-page.css';
 
 function officialStoreUrl(value) {
@@ -102,7 +103,7 @@ export function Extension() {
     document.title = 'Get the Chrome extension — formER';
     return () => { document.title = previous; };
   }, []);
-  return <div className="extension-page">
+  return <FloatingPathsBackground className="extension-page min-h-screen" position={-1}>
     <a className="ext-skip" href="#extension-content">Skip to content</a>
     <header className="ext-header"><Link to="/" className="ext-brand" aria-label="formER home"><FileCheck2 size={26} />formER</Link>
       <nav aria-label="Extension page navigation"><Link className="ext-home" to="/">Home</Link>{!loading && <Link className="ext-nav-action" to={isAuthenticated ? '/app' : '/login'}>{isAuthenticated ? 'Open dashboard' : 'Log in'}<ArrowUpRight size={16} aria-hidden="true" /></Link>}</nav>
@@ -152,5 +153,5 @@ export function Extension() {
       </section>
     </main>
     <footer className="ext-footer"><Link className="ext-text-link" to={isAuthenticated ? '/app' : '/'}><ArrowLeft size={15} aria-hidden="true" />{isAuthenticated ? 'Back to dashboard' : 'Back to formER'}</Link><span>A little less repetition. A little more room.</span></footer>
-  </div>;
+  </FloatingPathsBackground>;
 }

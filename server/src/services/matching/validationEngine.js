@@ -16,6 +16,13 @@ export const extractProfileValue = (profile, canonicalKey, field = {}) => {
   // 1. Personal Information
   if (category === 'personal') {
     let val = profile.personal?.[sub];
+    if (['birthMonth', 'birthDay', 'birthYear'].includes(sub)) {
+      const date = profile.personal?.dateOfBirth;
+      const parsed = typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date) ? new Date(date) : null;
+      const index = { birthYear: 0, birthMonth: 1, birthDay: 2 }[sub];
+      val = parsed && Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date
+        ? Number(date.split('-')[index]) : null;
+    }
     if (sub === 'middleInitial' && profile.personal?.middleName?.trim()) {
       const middle = profile.personal.middleName.trim();
       // Multiple middle names need an explicit choice of initials.
@@ -138,6 +145,14 @@ export const extractProfileValue = (profile, canonicalKey, field = {}) => {
 
   // 5. Professional Profile Links & Skills
   if (category === 'professional') {
+    if (sub === 'currentWork') {
+      const current = (profile.professional?.workExperience || []).filter((entry) => entry.isCurrent);
+      return {
+        value: current.length === 1 ? current[0][prop] ?? null : null, recordId: null,
+        isAmbiguousRecord: current.length > 1,
+        warning: current.length > 1 ? 'More than one current role is saved.' : undefined
+      };
+    }
     if (sub === 'profileLinks') {
       const val = profile.professional?.profileLinks?.[prop];
       return { value: val !== undefined && val !== null ? val : null, recordId: null };
@@ -170,7 +185,7 @@ export const formatAndValidateValue = (value, fieldDef, field) => {
     if (strVal.length === 0) {
       return { formattedValue: null, isValid: false, message: 'String value is empty' };
     }
-    return validateDestination(strVal, field);
+    return validateDestination(strVal, field, fieldDef.key);
   }
 
   // Number values
@@ -190,7 +205,7 @@ export const formatAndValidateValue = (value, fieldDef, field) => {
       }
     }
 
-    return validateDestination(num, field);
+    return validateDestination(num, field, fieldDef.key);
   }
 
   // Date values
@@ -222,7 +237,7 @@ export const isUnsupportedField = (field) => {
   const name = (field.name || '').toLowerCase();
   const combined = `${label} ${name} ${field.id || ''} ${field.placeholder || ''} ${field.section || ''}`.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase().replace(/[_-]/g, ' ');
 
-  if (/captcha|password|passcode|one time|verification|security code|\botp\b|\b(?:cvv|cvc|2fa|mfa)\b|credit.?card|debit.?card|card.?number|card.?holder|\bcc\b|expiry|expiration/.test(combined)) {
+  if (/captcha|password|passcode|one time|verification|security code|\botp\b|\b(?:cvv|cvc|2fa|mfa)\b|credit.?card|debit.?card|card.?number|card.?holder|card.?user|card.?issuing|card.?customer|social security|\bssn\b|driver.?s? licen[cs]e|driv lic|passport|bank account|\biban\b|\buser id\b|cc(?:number|exp|issuer|cstsvc)|\bcc\b|expiry|expiration/.test(combined)) {
     return {
       unsupported: true,
       reason: 'Security and verification challenge fields cannot be automated'
@@ -237,6 +252,7 @@ export const isUnsupportedField = (field) => {
  */
 export const violatesNegativeGuards = (field, candidateKey) => {
   const identity = identifyField(field);
+  if (/^personal\.birth(?:Month|Day|Year)$|^professional\.currentWork\./.test(candidateKey) && identity?.key !== candidateKey) return true;
   if (identity?.blocked || (identity?.key && identity.key !== candidateKey)) return true;
   const label = (field.label || '').toLowerCase();
   const section = (field.section || '').toLowerCase();

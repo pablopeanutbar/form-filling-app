@@ -8,7 +8,7 @@ const fieldInputSchema = z.object({
   id: z.string().max(200).optional().default(''),
   placeholder: z.string().max(500).optional().default(''),
   section: z.string().max(300).optional().default(''),
-  options: z.array(z.union([z.string().max(300), z.object({ label: z.string().max(300), value: z.string().max(300), disabled: z.boolean().optional() }).strict()])).max(100).optional(),
+  options: z.array(z.union([z.string().max(300), z.object({ label: z.string().max(300), value: z.string().max(300), disabled: z.boolean().optional() }).strict()])).max(150).optional(),
   optionsTruncated: z.boolean().optional(),
   required: z.boolean().optional().default(false),
   constraints: z.object({

@@ -1,5 +1,5 @@
 const $ = (id) => document.getElementById(id);
-const fillableTypes = new Set(['text', 'email', 'tel', 'number', 'date', 'textarea', 'select', 'radio']);
+const fillableTypes = new Set(['text', 'email', 'tel', 'number', 'date', 'url', 'textarea', 'select', 'radio']);
 const statuses = [
   ['matched', 'Matched'],
   ['needs_review', 'Needs review'],
@@ -71,7 +71,7 @@ function explanation(result) {
   if (result.status === 'matched') return '';
   if (result.value != null) return 'Check that this suggestion answers the question before selecting it.';
   const reason = result.reason || '';
-  if (/empty|not set|no (education|educational)/i.test(reason)) return 'The needed information is missing from your saved details.';
+  if (/empty|not set|no (education|educational|explicit saved)/i.test(reason)) return 'The needed information is missing from your saved details.';
   if (/multiple qualification|addresses differ|ambiguous|conflicting/i.test(reason)) return 'More than one answer or interpretation is possible.';
   return 'Check your saved details and the choices or format required by this field.';
 }
@@ -81,7 +81,7 @@ function renderCard(entry) {
   const label = field.label || 'Field without a label';
   const card = element('article', null, 'card');
   card.append(element('h3', label));
-  if (entry.filled) card.append(element('p', 'Filled', 'filled-label'));
+  if (entry.filled) card.append(element('p', entry.filled === 'already_correct' ? 'Already correct' : 'Filled', 'filled-label'));
   if (fillableTypes.has(field.type) && result.value != null && ['matched', 'needs_review'].includes(result.status)) {
     const answer = element('p', entry.edited ?? String(result.displayValue ?? result.value), 'answer');
     const select = element('input');
@@ -242,15 +242,32 @@ function bulkSelection() {
 }
 
 function showFillResults(results, selected) {
-  const counts = { filled: 0, skipped: 0, failed: 0 };
+  let filled = 0;
+  let alreadyCorrect = 0;
   const labels = new Map(selected.map(({ field }) => [field.fieldId, field.label || 'Unlabeled field']));
-  const details = element('ul');
+  const groups = new Map();
   for (const result of results) {
-    counts[result.status]++;
-    if (result.status !== 'filled') details.append(element('li', `${labels.get(result.fieldId)}: ${result.reason}`));
+    if (result.status === 'filled') filled++;
+    else if (result.status === 'already_correct') alreadyCorrect++;
+    else {
+      const label = { conflict: 'Needs approval', skipped: 'Skipped', failed: 'Failed' }[result.status] || 'Check field';
+      const reason = label + ' · ' + (result.reason || 'Check this field on the page.');
+      if (!groups.has(reason)) groups.set(reason, []);
+      groups.get(reason).push(labels.get(result.fieldId));
+    }
   }
-  $('fill-results').replaceChildren(element('p', `${counts.filled} filled ? ${counts.skipped} skipped ? ${counts.failed} failed`));
-  if (details.childElementCount) $('fill-results').append(details);
+  const attention = results.length - filled - alreadyCorrect;
+  $('fill-results').replaceChildren(
+    element('p', `${filled} filled ? ${alreadyCorrect} already correct ? ${attention} need attention`),
+    element('small', 'formER did not submit the form.')
+  );
+  if (attention) {
+    const details = element('details');
+    const list = element('ul');
+    for (const [reason, fields] of groups) list.append(element('li', `${reason} (${fields.join(', ')})`));
+    details.append(element('summary', 'See details'), list);
+    $('fill-results').append(details);
+  }
 }
 
 async function fillSelected(mode = 'selected') {
@@ -285,10 +302,11 @@ async function fillSelected(mode = 'selected') {
     if (request !== generation) return;
     if (!response?.success) throw new Error(response?.message || 'Check the page before trying again.');
     showFillResults([...response.data, ...skipped], selected);
-    const filled = new Set(response.data.filter((result) => result.status === 'filled').map((result) => result.fieldId));
+    const completed = new Map(response.data.filter((result) => ['filled', 'already_correct'].includes(result.status))
+      .map(({ fieldId, status }) => [fieldId, status]));
     for (const entry of selected) {
-      if (filled.has(entry.field.fieldId)) {
-        entry.filled = true;
+      if (completed.has(entry.field.fieldId)) {
+        entry.filled = completed.get(entry.field.fieldId);
         entry.selected = false;
         entry.overwrite = false;
       }

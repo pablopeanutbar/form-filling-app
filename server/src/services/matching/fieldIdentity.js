@@ -11,12 +11,33 @@ export function identifyField(field) {
   const blocked = (reason) => ({ blocked: true, reason });
   const roles = ['father', 'mother', 'guardian'].filter((role) => new RegExp(`\\b${role}(?:s)?\\b`).test(context));
   const otherPerson = has(/\b(parent|spouse|emergency|referee|reference)\b/);
+  const label = normalizeIdentityText(field.label);
+  const birthContext = /\b(date of birth|birth date|birthdate|dob|d o b)\b/.test(context);
+  const birthParts = Object.entries({ Month: /^(?:mm|month)$/, Day: /^(?:dd|day)$/, Year: /^(?:yy|yyyy|year)$/ })
+    .filter(([part, shorthand]) => {
+      const word = part.toLowerCase();
+      return new RegExp(`\\b(?:birth|dob) ?${word}\\b`).test(text) || (birthContext &&
+        (new RegExp(`\\b${word}\\b`).test(text) || [field.name, field.id].some((value) =>
+          shorthand.test(normalizeIdentityText(value).replace(/^\d+\s*/, '')))));
+    });
+  if (['select', 'radio'].includes(field.type) && (birthParts.length || birthContext)) {
+    if (roles.length || otherPerson || birthParts.length !== 1) return blocked('The date of birth component is unclear.');
+    return identity('personal.birth' + birthParts[0][0]);
+  }
+  if (/^(title|honorific|age|birth place|place of birth|income|custom message|comments?)$/.test(label)) {
+    return blocked('There is no explicit saved answer for this field.');
+  }
+  if (!roles.length && !otherPerson && !has(/\b(previous|former|desired|applied|target|prospective)\b/)) {
+    if (/^(company|company name|employer|employer name|current employer|current company)$/.test(label)) return identity('professional.currentWork.company');
+    if (/^(position|job title|current position|current job title)$/.test(label)) return identity('professional.currentWork.jobTitle');
+    if (/^(website|web site|personal website|portfolio website|portfolio url)$/.test(label)) return identity('professional.profileLinks.portfolio');
+  }
   const nameParts = [
-    ['firstName', /\b(first name|given name|forename)\b/],
-    ['middleInitial', /\bmiddle initial\b/],
+    ['firstName', /\b(first name|firstname|given name|forename)\b/],
+    ['middleInitial', /\b(middle initial|middle i)\b/],
     ['middleName', /\bmiddle name\b/],
-    ['lastName', /\b(last name|family name|surname)\b/],
-    ['fullName', /\b(full name|complete name|name in full)\b/]
+    ['lastName', /\b(last name|lastname|family name|surname)\b/],
+    ['fullName', /\b(full name|fullname|complete name|name in full)\b/]
   ].filter(([, pattern]) => pattern.test(text));
   if (nameParts.length || /\bname\b/.test(text)) {
     if (roles.length > 1 || otherPerson) return blocked('The person requested is ambiguous or unsupported.');
@@ -39,8 +60,8 @@ export function identifyField(field) {
     ['postalCode', /\b(zip|postal code|postcode|pin code|pincode)\b/],
     ['city', /\b(city|town)\b/], ['state', /\b(state|province)\b/],
     ['country', /\bcountry\b/], ['district', /\bdistrict\b/],
-    ['addressLine2', /\baddress line 2\b/],
-    ['addressLine1', /\b(address line 1|street address)\b/]
+    ['addressLine2', /\b(address line 2|address 2|address2)\b/],
+    ['addressLine1', /\b(address line 1|address 1|address1|street address)\b/]
   ].filter(([, pattern]) => pattern.test(text));
   if (addressParts.length) {
     const permanent = has(/\bpermanent\b/);

@@ -121,9 +121,10 @@ export const extractFormFields = (root = document) => {
     let optionsTruncated = false;
     if (type === 'select') {
       const opts = extractSelectOptions(el);
-      optionsTruncated = opts.length > 50;
+      const limit = /date of birth|birth date|birthdate|\bdob\b|birth.?year/i.test([label, section, name, id].join(' ')) ? 150 : 50;
+      optionsTruncated = opts.length > limit;
       if (opts.length > 0) {
-        options = opts.slice(0, 50); // Cap at top 50 options to adhere to validation bounds
+        options = opts.slice(0, limit);
       }
     }
 

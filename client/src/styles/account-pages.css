@@ -52,9 +52,6 @@
 .account-pages .ap-guide > .section-icon { margin-bottom: 22px; background: white; color: var(--app-blue); }
 .account-pages .ap-guide h2 { font-size: 20px; line-height: 1.4; letter-spacing: -.55px; }
 .account-pages .ap-guide p { margin-top: 12px; font-size: 12px; line-height: 1.85; color: var(--app-muted); }
-.account-pages .ap-simple-list { list-style: none; padding: 0; margin: 24px 0 0; font-size: 12px; color: var(--app-muted); }
-.account-pages .ap-simple-list li { padding: 12px 0; border-top: 1px solid var(--app-line); }
-.account-pages .ap-simple-list li:last-child { padding-bottom: 0; }
 .account-pages .ap-side-note { padding: 0 8px; }
 .account-pages .ap-side-note h3, .account-pages .ap-guide h3 { font-size: 12px; font-weight: 600; }
 .account-pages .ap-side-note p { margin-top: 8px; color: var(--app-muted); font-size: 12px; line-height: 1.85; }

@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+.floating-paths-art {
+  position: absolute;
+  inset: 0 0 auto;
+  height: min(100%, 46rem);
+  z-index: -1;
+  pointer-events: none;
+  color: var(--color-primary, #0071e3);
+  opacity: .75;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, #000 55%, transparent);
+}
+.floating-paths-art svg { transform: scaleX(-1); }
+
 :root {
   --color-primary: #0071E3;
   --color-primary-hover: #0066CC;

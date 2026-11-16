@@ -5,6 +5,7 @@ import { apiClient } from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import { Button } from '../components/common/Button.jsx';
 import { Alert } from '../components/common/Alert.jsx';
+import { FloatingPathsBackground } from '../components/ui/floating-paths';
 import '../styles/extension-page.css';
 
 export function ExtensionConnection() {
@@ -48,7 +49,7 @@ export function ExtensionConnection() {
     catch { setError('The connection could not be revoked. Please try again.'); }
     finally { setBusy(false); }
   }
-  return <div className="extension-page"><header className="ext-header"><Link to="/" className="ext-brand"><FileCheck2 size={26} />formER</Link><Link to="/app" className="ext-text-link">Dashboard</Link></header>
+  return <FloatingPathsBackground className="extension-page min-h-screen" position={-1}><header className="ext-header"><Link to="/" className="ext-brand"><FileCheck2 size={26} />formER</Link><Link to="/app" className="ext-text-link">Dashboard</Link></header>
     <main className="ext-connection-page"><section className="ext-distribution ext-connection-card">
       <span className="ext-feature-icon"><Link2 size={22} /></span><h1>{pairingId ? 'Connect your extension' : 'Your extension connections'}</h1>
       <p>Signed in as <strong>{user.email}</strong>.</p>
@@ -68,5 +69,5 @@ export function ExtensionConnection() {
         {connections.map((connection) => <div className="ext-connection-row" key={connection.id}><div><strong>formER for Chrome</strong><small>Connected {new Date(connection.createdAt).toLocaleDateString()}</small><small>Extension ID: {connection.extensionId}</small></div><Button variant="secondary" disabled={busy} onClick={() => revoke(connection.id)}>Disconnect</Button></div>)}
         <Button variant="ghost" onClick={() => setRefresh((n) => n + 1)} disabled={busy || loading}>Refresh connections</Button>
       </div>
-    </section></main></div>;
+    </section></main></FloatingPathsBackground>;
 }

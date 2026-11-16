@@ -5,6 +5,14 @@
  */
 
 export const CANONICAL_FIELDS = [
+  ...['Month', 'Day', 'Year'].map((part) => ({
+    key: 'personal.birth' + part, label: 'Birth ' + part.toLowerCase(), category: 'personal',
+    description: part + ' component of the saved date of birth', dataType: 'number', aliases: []
+  })),
+  ...[['company', 'Current employer'], ['jobTitle', 'Current job title']].map(([prop, label]) => ({
+    key: 'professional.currentWork.' + prop, label, category: 'professional',
+    description: label + ' from a work record marked current', dataType: 'string', aliases: []
+  })),
   ...['firstName', 'middleName', 'middleInitial', 'lastName'].map((key) => ({ key: 'personal.' + key, label: key.replace(/([A-Z])/g, ' $1'), category: 'personal', dataType: 'string', description: 'Applicant ' + key + ', not a full name or parent name', aliases: [] })),
   ...['permanent', 'correspondence', 'unspecified'].flatMap((kind) => ['addressLine1', 'addressLine2', 'city', 'district', 'state', 'country', 'postalCode'].filter((prop) => kind === 'unspecified' || prop === 'addressLine2').map((prop) => ({ key: 'addresses.' + kind + '.' + prop, label: kind + ' ' + prop, category: 'addresses', dataType: 'string', description: kind + ' address ' + prop, aliases: [] }))),
   ...['10th', '12th', 'undergraduate'].flatMap((level) => (level === 'undergraduate' ? ['sgpa'] : ['cgpa', 'cgpaScale', 'sgpa']).map((prop) => ({ key: 'education.' + level + '.' + prop, label: level + ' ' + prop, category: 'education', dataType: 'number', description: level + ' ' + prop + ', not percentage or marks', aliases: [] }))),

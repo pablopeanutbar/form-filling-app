@@ -1,6 +1,25 @@
+const months = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+const genderLabels = new Map([
+  ['male', ['male', 'm']], ['female', ['female', 'f']], ['other', ['other']],
+  ['prefer_not_to_say', ['prefer not to say', 'prefer_not_to_say']]
+]);
+
+function choiceMatches(option, expected, key) {
+  const label = String(option.label).trim().toLowerCase();
+  const part = /^personal\.birth(Month|Day|Year)$/.exec(key)?.[1];
+  if (part) {
+    const month = months.findIndex((name) => name === label || name.slice(0, 3) === label);
+    if (part === 'Month' && month >= 0) return month + 1 === Number(expected);
+    // Visible labels carry meaning even when site values are opaque or zero-based.
+    return (part === 'Year' ? /^\d{4}$/ : /^\d{1,2}$/).test(label) && Number(label) === Number(expected);
+  }
+  if (key === 'personal.gender') return genderLabels.get(expected.toLowerCase())?.includes(label);
+  return label === expected.toLowerCase() || String(option.value).trim().toLowerCase() === expected.toLowerCase();
+}
+
 // Destination checks are independent of the canonical field's data type.
 // Unsupported custom patterns are not evaluated as untrusted regular expressions.
-export function validateDestination(value, field) {
+export function validateDestination(value, field, key = '') {
   const invalid = (message) => ({ formattedValue: null, isValid: false, message });
   const type = (field.type || 'text').toLowerCase();
   const constraints = field.constraints || {};
@@ -23,7 +42,7 @@ export function validateDestination(value, field) {
     }
   }
   if (type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(string)) return invalid('The saved answer is not an email address.');
-  if (type === 'url') {
+  if (type === 'url' || key === 'professional.profileLinks.portfolio') {
     try { if (!['https:', 'http:'].includes(new URL(string).protocol)) return invalid('The saved answer is not a supported website address.'); }
     catch { return invalid('The saved answer is not a website address.'); }
   }
@@ -36,9 +55,8 @@ export function validateDestination(value, field) {
   if (constraints.minlength !== undefined && string.length < constraints.minlength) return invalid('The saved answer is too short for this field.');
   if (['select', 'radio'].includes(type)) {
     if (!Array.isArray(field.options) || !field.options.length || field.optionsTruncated) return invalid('The available choices could not all be checked.');
-    const normalize = (v) => String(v).trim().toLowerCase();
     const options = field.options.map((o) => typeof o === 'string' ? { label: o, value: o } : o);
-    const matches = options.filter((o) => !o.disabled && (normalize(o.label) === normalize(string) || normalize(o.value) === normalize(string)));
+    const matches = options.filter((o) => !o.disabled && choiceMatches(o, string, key));
     if (matches.length !== 1 || matches[0].value === '') return invalid('The saved answer does not identify one available choice.');
     formattedValue = matches[0].value;
     return { formattedValue, displayValue: matches[0].label, isValid: true };

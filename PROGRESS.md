@@ -1,6 +1,30 @@
 # formER — Development Progress Tracking
 
-## Current milestone ? Reliable reviews and bulk autofill
+## Workspace cleanup
+
+- Made Recent activity full width and removed the History side notes. Removed the desktop workspace top bar and the signed-in sidebar link to the landing page. Kept the mobile navigation header.
+
+## Dashboard cleanup
+
+- Increased the contrast of Floating Paths, moved the curves toward the right, and animated opacity so the full strokes stay visible. Verified the curves on the refreshed dashboard in the browser.
+
+- Replaced the dashboard glow with the supplied 21st.dev Floating Paths design. The shared workspace and extension website pages use faint Apple-blue SVG paths with Motion. Reduced motion shows static paths. The landing page and the login/signup flowing backgrounds retain their existing designs.
+- Added the typed component in `client/src/components/ui`, configured TypeScript and the `@/` alias, and retained Tailwind's existing `client/src/index.css` entry point. The production build, TypeScript check, and all 13 focused workspace tests passed.
+
+- Added a subtle pointer spotlight to the extension card, adapted from the React Bits effect using the existing React and CSS. Touch and reduced-motion settings keep the card static. All 13 focused workspace tests passed.
+
+- Removed the duplicate education preview from the dashboard. Profile links stay in the left column, and the right column is dedicated to the Chrome extension. Updated the extension card to describe user-approved filling. The 13 focused workspace tests passed.
+
+## Current milestone ? Autofill coverage and repeat-fill feedback
+
+- Inspected the published RoboForm All Fields form and traced its control inventory through both extractors and the matching validator using a synthetic profile. No private account profile was inspected, so the fixture does not attribute the reported live matches to particular saved values.
+- Added split DOB matching for explicit month/day/year choices, including RoboForm's shared label and compact field names. Choices must be unique, enabled and match the meaning of their visible label. Birth year lists up to 150 options are supported in DOB context. The zero-valued Month, Day and Year prompts are treated as unanswered.
+- Added exact mappings for Company and Position when one current work record is saved, website from the saved portfolio or website URL, additional name and address aliases, and short gender choice labels. Existing education resolution remains in place. A missing second address line in the fixture produces Needs review. Home/work phones and fax have no separately saved values. Honorific, age, birthplace, income and freeform messages/comments remain unanswered. Hidden/reset controls, credentials, payment fields and protected identity fields are excluded or unsupported.
+- Repeat filling distinguishes verified new writes, already-correct values, overwrite conflicts, incompatibility and failures. It compares safe equivalents for numeric and formatted telephone answers and verifies exact native choice values. The panel groups attention reasons in expandable details and confirms it did not submit the form.
+- Verification: 26 focused tests passed across autofill-coverage, extension-fill, extension-safety and matching-identities. Covers the synthetic RoboForm inventory, split DOB, repeat fills and overwrite conflicts, React text input, and stale-target protections. Live Chrome testing remains manual.
+
+
+## Previous milestone ? Reliable reviews and bulk autofill
 
 - Fixed two stale review paths: worker suspension lost the in-memory approval metadata, and detection-only extraction invalidated the page review. The worker now keeps review IDs, document bindings, expiry, and eligible field status metadata in trusted extension session storage. It verifies the original page snapshot before returning analysis. Detection leaves that snapshot intact.
 - The same expiry applies in the worker and panel. The fill path still rechecks the account, active tab and document and verifies target identity, live constraints, overwrite approval, and written values.

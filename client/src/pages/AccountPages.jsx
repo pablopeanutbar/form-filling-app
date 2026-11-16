@@ -25,27 +25,16 @@ function Availability({ children }) {
 function HistoryPage() {
   return <>
     <PageHeader eyebrow="Your activity" title="History" description="A place to look back on your form-filling activity." />
-    <div className="ap-layout">
-      <section className="app-panel ap-history" aria-labelledby="activity-title">
-        <div className="ap-card-header"><h2 id="activity-title">Recent activity</h2><Availability>Not available yet</Availability></div>
-        <div className="ap-history-empty">
-          <div className="ap-empty-art" aria-hidden="true"><History size={36} strokeWidth={1.3} /></div>
-          <h3>Your history starts here.</h3>
-          <p>Activity history isn’t available in formER yet. There are no recorded dates or results to display here.</p>
-          <Link className="app-button" to="/app/profile">Review my information<ArrowRight size={16} aria-hidden="true" /></Link>
-        </div>
-        <div className="ap-card-footnote"><Info size={16} aria-hidden="true" /><p>This page can’t confirm whether an application was submitted.</p></div>
-      </section>
-      <aside className="ap-aside">
-        <section className="ap-guide">
-          <span className="section-icon" aria-hidden="true"><NotebookPen size={21} strokeWidth={1.6} /></span>
-          <h2>A little preparation goes a long way.</h2>
-          <p>Keep the details you use most often up to date, so they’re easy to find when you need them.</p>
-          <ul className="ap-simple-list"><li>Check your contact information.</li><li>Add your latest qualifications.</li><li>Review answers before you submit.</li></ul>
-        </section>
-        <div className="ap-side-note"><h3>Looking for a confirmation?</h3><p>Check the website where you applied or the confirmation email from that service.</p></div>
-      </aside>
-    </div>
+    <section className="app-panel ap-history" aria-labelledby="activity-title">
+      <div className="ap-card-header"><h2 id="activity-title">Recent activity</h2><Availability>Not available yet</Availability></div>
+      <div className="ap-history-empty">
+        <div className="ap-empty-art" aria-hidden="true"><History size={36} strokeWidth={1.3} /></div>
+        <h3>Your history starts here.</h3>
+        <p>Activity history isn’t available in formER yet. There are no recorded dates or results to display here.</p>
+        <Link className="app-button" to="/app/profile">Review my information<ArrowRight size={16} aria-hidden="true" /></Link>
+      </div>
+      <div className="ap-card-footnote"><Info size={16} aria-hidden="true" /><p>This page can’t confirm whether an application was submitted.</p></div>
+    </section>
   </>;
 }
 
