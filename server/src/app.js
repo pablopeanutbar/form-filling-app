@@ -27,7 +27,9 @@ const corsOptions = {
     if (!origin) return callback(null, true);
 
     const isExplicitlyAllowed = allowedOrigins.includes(origin);
-    const isDevLocalhost = !isProduction && origin.startsWith('http://localhost:');
+    const isDevLocalhost =
+      !isProduction &&
+      (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:'));
 
     if (isExplicitlyAllowed || isDevLocalhost) {
       return callback(null, true);
