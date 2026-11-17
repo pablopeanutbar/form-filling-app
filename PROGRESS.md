@@ -27,7 +27,24 @@
 
 - Removed the duplicate education preview from the dashboard. Profile links stay in the left column, and the right column is dedicated to the Chrome extension. Updated the extension card to describe user-approved filling. The 13 focused workspace tests passed.
 
-## Current milestone ? Autofill coverage and repeat-fill feedback
+## Current milestone — Stable Extension ID for Development and Beta Testing
+
+- Established a reproducible shared development Chrome extension ID: **`egddjhnhnbgdhgiepnfmnnhfagbaambn`**.
+- Configured Chrome's supported public manifest `key` property in `extension/manifest.json` using a 2048-bit RSA public key (DER SubjectPublicKeyInfo Base64).
+- Kept the private key strictly in memory during generation; no private signing keys, PEM files, secrets, or tokens are created on disk or committed to source control.
+- Re-packaged the verified development distribution archive `artifacts/extension/formER-development.zip` and integrity receipt `artifacts/extension/formER-development.json` (13 verified files, manifest at root).
+- Verified path independence: Chrome computes the exact same extension ID regardless of where developers or beta testers extract the folder.
+- Updated `server/.env.example` and local `server/.env` to configure `EXTENSION_DEV_IDS=egddjhnhnbgdhgiepnfmnnhfagbaambn`. Backend allowlisting remains environment-driven; no environment exceptions are hardcoded in application logic.
+- Kept local development and future Chrome Web Store production configurations completely distinct (`EXTENSION_IDS` remains reserved for the eventual published listing).
+- Preserved existing pairing, token rotation, user approval, session CSRF, rate limits, and user isolation boundaries.
+- Updated setup and tester documentation in `extension/README.md` and `extension/PHASE1.md`.
+- Verified with focused tests:
+  - Configuration environment parsing (`server/tests/extension-config.test.js`): 4/4 passed.
+  - Authorization & pairing boundary (`server/tests/extension-authorization.test.js`): 6/6 passed.
+  - Package integrity check (`powershell -NoProfile -File extension/scripts/package.ps1`): 13/13 files verified.
+  - Real Chrome CDP path independence check: Confirmed `chrome-extension://egddjhnhnbgdhgiepnfmnnhfagbaambn` loaded from independent paths and extracted ZIP.
+
+## Previous milestone — Autofill coverage and repeat-fill feedback
 
 - Inspected the published RoboForm All Fields form and traced its control inventory through both extractors and the matching validator using a synthetic profile. No private account profile was inspected, so the fixture does not attribute the reported live matches to particular saved values.
 - Added split DOB matching for explicit month/day/year choices, including RoboForm's shared label and compact field names. Choices must be unique, enabled and match the meaning of their visible label. Birth year lists up to 150 options are supported in DOB context. The zero-valued Month, Day and Year prompts are treated as unanswered.

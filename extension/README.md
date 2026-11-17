@@ -58,6 +58,8 @@ The Vite development middleware rechecks the archive checksum and each allowlist
 
 ## Install and update manually
 
-Download the ZIP, extract it, open `chrome://extensions`, enable **Developer Mode**, choose **Load unpacked**, and select the extracted folder containing `manifest.json`. Do not select the ZIP itself. Pin formER using Chrome's puzzle-piece Extensions menu. Keep that folder in place while the extension is installed.
+Download the ZIP (or check out the repository), extract it, open `chrome://extensions`, enable **Developer Mode**, choose **Load unpacked**, and select the extracted folder containing `manifest.json`. Do not select the ZIP itself. Pin formER using Chrome's puzzle-piece Extensions menu. Keep that folder in place while the extension is installed.
+
+The unpacked extension receives a stable development ID across all computers and folder locations: **`egddjhnhnbgdhgiepnfmnnhfagbaambn`** (derived from the public `key` in `manifest.json`). Testers and developers running a local backend must set `EXTENSION_DEV_IDS=egddjhnhnbgdhgiepnfmnnhfagbaambn` in `server/.env`. Each tester requires their own running backend and database (or a reachable shared instance), since the extension interacts with the API at `http://localhost:5000`.
 
 After rebuilding, download and extract the new copy into the same extension folder, then click **Reload** on formER's card in `chrome://extensions`. This is a manual development workflow, not automatic Store updates. Real Chrome installation, layout, and interactions remain manual acceptance checks.

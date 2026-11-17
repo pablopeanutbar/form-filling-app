@@ -3,6 +3,7 @@
   "name": "formER — Intelligent Form Autofill",
   "version": "0.2.0",
   "description": "AI/ML-powered intelligent form field detection and autofill assistance.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvWgm/3GlO2HaXeE2RoVVdNZKj1CByNvxP3FMZlnhdQo0KE4a495JciqxIsFa2Elq/tck7/zVNDX4VzBSle8v3d9lh5lupgoCvyiwecp+ULviv6YwVtIlR4W9FM2wI7Cq0XUQsHcpJ8kiQfNYKMa2hrOWA+fmw6T+nmFPN9AtFb7N3EONSBVzkQ+sTib0K113CK8NIHrox08u34WvE+kPEz/RZlg7szx3U/7rySTXUYi5zwXrICRi/clOFmITseZGjTDrSsJBBLkK5oKqSkjIPa0dlTn9fFWO6ZqDKXOACil3uQqJVzVbfrke4+p5YiRGr97loh9/ItE8OVJuC+T2+QIDAQAB",
   "permissions": [
     "activeTab",
     "scripting",
