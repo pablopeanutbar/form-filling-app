@@ -15,12 +15,13 @@
   ],
   "minimum_chrome_version": "116",
   "action": {
-    "default_title": "formER ? Review form",
+    "default_title": "formER - Review form",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
-    }
+    },
+    "default_popup": "popup/review.html"
   },
   "background": {
     "service_worker": "background/service-worker.js",

@@ -1,0 +1,53 @@
+html, body {
+  width: 398px;
+  height: 580px;
+  overflow: hidden;
+}
+
+html {
+  background: transparent;
+  --gutter: 13px;
+}
+
+body {
+  position: relative;
+  isolation: isolate;
+  background: #f5f5f7;
+  border-radius: 13px;
+}
+
+/* A single ambient layer adapts the dashboard's mirrored Floating Paths. */
+body::before {
+  content: "";
+  position: absolute;
+  inset: 122px 0 64px;
+  z-index: -1;
+  pointer-events: none;
+  background: center / 100% 100% no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 45 696 316' preserveAspectRatio='none'%3E%3Cpath transform='translate(696 0) scale(-1 1)' d='M-380 -189C-380 -189 -312 216 152 343C616 470 684 875 684 875 M-400 -213C-400 -213 -332 192 172 319C636 446 704 851 704 851 M-420 -237C-420 -237 -352 168 192 295C656 422 724 827 724 827 M-440 -261C-440 -261 -372 144 212 271C676 398 744 803 744 803 M-460 -285C-460 -285 -392 120 232 247C696 374 764 779 764 779 M-480 -309C-480 -309 -412 96 252 223C716 350 784 755 784 755 M-500 -333C-500 -333 -432 72 272 199C736 326 804 731 804 731 M-520 -357C-520 -357 -452 48 292 175C756 302 824 707 824 707 M-540 -381C-540 -381 -472 24 312 151C776 278 844 683 844 683' fill='none' stroke='%230071e3' stroke-width='0.85' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E");
+  mask-image: linear-gradient(to bottom, transparent, black 15%, black 55%, transparent);
+  opacity: .19;
+}
+
+.panel-scroll { overflow-x: hidden; }
+main { padding-block: 10px 14px; }
+.overview { padding: 10px 12px; }
+#counts { margin-block-start: 6px; }
+.filter-row { margin-block: 9px 7px; }
+#groups { gap: 6px; }
+.group-heading { min-height: 34px; padding-block: 6px; }
+.field-summary { min-height: 46px; padding-inline: 10px; }
+.field-detail { padding-inline: 10px; }
+.action-footer { gap: 5px; padding-block: 7px 8px; }
+
+.popup-status {
+  padding: var(--gutter);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  body::before { animation: paths-drift 26s ease-in-out infinite alternate; }
+}
+
+@keyframes paths-drift {
+  from { opacity: .14; transform: translateY(0); }
+  to { opacity: .24; transform: translateY(8px); }
+}

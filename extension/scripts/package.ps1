@@ -14,7 +14,7 @@ if ($manifest.manifest_version -ne 3) { throw 'Expected a Manifest V3 extension.
 if ($files.Count -ne @($files | Select-Object -Unique).Count) { throw 'Duplicate package entries.' }
 
 # Only explicitly reviewed runtime files are packaged. No recursive folder copies.
-$references = @('manifest.json', $manifest.background.service_worker, $manifest.side_panel.default_path, 'sidepanel/review.css', 'sidepanel/review.js', 'content/fill.js')
+$references = @('manifest.json', $manifest.background.service_worker, $manifest.action.default_popup, 'popup/review.css', 'popup/review.js', $manifest.side_panel.default_path, 'sidepanel/review.css', 'sidepanel/review.js', 'content/fill.js')
 $references += @($manifest.icons.PSObject.Properties.Value)
 $references += @($manifest.action.default_icon.PSObject.Properties.Value)
 foreach ($reference in $references) {

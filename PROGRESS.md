@@ -1,5 +1,21 @@
 # formER — Development Progress Tracking
 
+## Premium toolbar popup
+
+- Refined the popup to 398 by 580 pixels with 13 px side padding, a top address bar, and denser review spacing. The account button starts existing pairing directly, and the connected disclosure shows the current email and disconnect action in the page flow.
+- Added a popup-only SVG adaptation of the dashboard's Floating Paths with a slow CSS drift and a static reduced-motion state. Visual and interaction checks in Chrome remain manual.
+
+- The toolbar popup mounts the shared Side Panel markup and controller directly. Its internal surface has a 13 px radius. The existing Side Panel remains available outside the toolbar action.
+- Fixed account and detection requests being dropped by the Side Panel-only message gate. The worker accepts only the exact review URLs from this extension and resolves missing sender document IDs through Chrome's active extension contexts. Pairing, active-tab checks, and review ownership still run in the existing worker.
+- The worker completes accepted analysis and fills when the popup closes. It caches review data and verified fill outcomes in trusted browser-session memory. Reopening checks the tab, page document, account status, and original five-minute expiry before restoring a review. Unsent selections, edits, and overwrite approvals reset. An unconfirmed fill is shown as unconfirmed.
+- Three focused tests passed for popup startup, trusted account and detection messages, pairing and disconnect retry, and restoring and filling a review after reopening. Verified JavaScript syntax and package references. Live Chrome verification remains manual.
+
+## Chrome side panel visual refresh
+
+- Built a compact Safari-inspired page bar and account disclosure, collapsible field rows with saved sources and editing, and fixed fill controls below one scrolling content area. Grouped verified fill outcomes in a concise status strip and expandable result details. Kept the existing authorization and filling logic.
+- Replaced only the extension guide preview with a static browser mockup of the side panel. Used native HTML, CSS, and JavaScript for the extension, with no new dependencies or permissions. The browser frame and motion were adapted as visual patterns without third-party implementation code.
+- Panel syntax, stylesheet, and markup references passed, and the website production build passed. Browser visuals and interactions are pending manual verification.
+
 ## Workspace cleanup
 
 - Moved Lenis to the shared site layout so smooth wheel scrolling also covers My Information, extension pages, and public routes. Increased responsiveness and retained native scrolling for touch, dialogs, and reduced-motion users.

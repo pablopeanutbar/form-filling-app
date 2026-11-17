@@ -7,20 +7,35 @@ test('Service worker restricts callers, keeps credentials trusted, sends metadat
   const oldChrome = globalThis.chrome; const oldFetch = globalThis.fetch;
   const storage = {}; const requests = []; const opened = []; let listener; let access;
   const id = 'a'.repeat(32);
+  const popupUrl = `chrome-extension://${id}/popup/review.html`;
+  const session = {};
+  const event = { addListener() {} };
   const tokens = { accessToken: 'a'.repeat(43), refreshToken: 'b'.repeat(43), revocationToken: 'c'.repeat(43), accessExpiresAt: new Date(Date.now() + 300000).toISOString(), refreshExpiresAt: new Date(Date.now() + 86400000).toISOString(), account: { id: 'alice', email: 'alice@example.test' } };
   const pair = { pairingId: 'request-id', deviceCode: 'd'.repeat(43), verificationCode: '1234ABCD', expiresAt: new Date(Date.now() + 300000).toISOString() };
   let approved = false; let disconnectFails = false;
   globalThis.chrome = {
-    storage: { local: {
+    storage: { session: {
+      get: async (key) => key === null ? session : { [key]: session[key] },
+      set: async (values) => Object.assign(session, values),
+      remove: async (keys) => { for (const key of [].concat(keys)) delete session[key]; }
+    }, local: {
       setAccessLevel: async (options) => { access = options.accessLevel; },
       get: async () => { assert.equal(access, 'TRUSTED_CONTEXTS'); return structuredClone(storage); },
       set: async (data) => { assert.equal(access, 'TRUSTED_CONTEXTS'); Object.assign(storage, structuredClone(data)); },
       remove: async (keys) => { for (const key of Array.isArray(keys) ? keys : [keys]) delete storage[key]; }
     } },
-    runtime: { id, getURL: (path) => `chrome-extension://${id}/${path}`, onMessage: { addListener: (fn) => { listener = fn; } } },
-    tabs: { create: async (options) => { opened.push(options.url); }, get: async () => ({ url: 'https://example.test/apply' }),
-      sendMessage: async (tab, message, callback) => {
-        if (message.type === 'PING') return { status: 'PONG' };
+    runtime: {
+      id, getURL: (path) => `chrome-extension://${id}/${path}`, onInstalled: event,
+      getContexts: async () => [{ documentId: 'popup' }], sendMessage: async () => {},
+      onMessage: { addListener: (fn) => { listener = fn; } }
+    },
+    scripting: { executeScript: async () => [{ documentId: 'page' }] },
+    tabs: { onUpdated: event, onRemoved: event,
+      create: async (options) => { opened.push(options.url); },
+      get: async (id) => ({ id, active: true, windowId: 3, url: 'https://example.test/apply' }),
+      sendMessage: async (tab, message, target, callback) => {
+        assert.equal(target.documentId, 'page');
+        if (message.type === 'CHECK_REVIEW') return { success: true };
         callback({ success: true, url: 'https://example.test/private', title: 'Private title', fields: [{ fieldId: 'f1', label: 'Name', type: 'text', value: 'never send', constraints: { maxlength: 50 } }], stats: { excludedCount: 0 } });
       }
     }
@@ -50,7 +65,7 @@ test('Service worker restricts callers, keeps credentials trusted, sends metadat
   };
   try {
     await import('../../extension/background/service-worker.js');
-    const sender = { id, url: `chrome-extension://${id}/popup/popup.html` };
+    const sender = { id, url: popupUrl };
     const send = (message) => new Promise((resolve) => { assert.equal(listener(message, sender, resolve), true); });
     assert.equal(listener({ type: 'CONNECT_ACCOUNT' }, { id, url: 'https://example.test', tab: { id: 1 } }, () => assert.fail('Untrusted caller got a response')), false);
     const pending = await send({ type: 'CONNECT_ACCOUNT' });
@@ -63,7 +78,7 @@ test('Service worker restricts callers, keeps credentials trusted, sends metadat
     assert.equal(connected.data.state, 'connected');
     assert.equal(connected.data.accessToken, undefined);
     assert.equal(storage.authorization.accessToken, tokens.accessToken);
-    const analyzed = await send({ type: 'ANALYZE_FORM', tabId: 7 });
+    const analyzed = await send({ type: 'ANALYZE_FORM', tabId: 7, windowId: 3 });
     assert.equal(analyzed.data.results[0].value, 'Alice');
     assert.ok(!JSON.stringify(analyzed).includes(tokens.accessToken));
     disconnectFails = true;

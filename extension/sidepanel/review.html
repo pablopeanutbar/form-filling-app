@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -8,41 +8,74 @@
   <script src="review.js" type="module"></script>
 </head>
 <body>
-  <header>
-    <div class="brand"><img src="../icons/icon48.png" width="26" height="26" alt="">formER</div>
-    <h1>Review form</h1>
-    <p id="page"></p>
-    <section class="account" aria-label="formER account">
-      <strong id="account-title" role="status">Checking account?</strong>
-      <p id="account-description"></p>
-      <p id="pair-code" hidden></p>
-      <p id="account-error" role="alert"></p>
-      <div class="account-actions">
-        <button id="connect" type="button" hidden>Connect account</button>
-        <button id="disconnect" type="button" hidden>Disconnect</button>
+  <div class="panel-scroll">
+    <header class="panel-header">
+      <div class="browser-toolbar">
+        <span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+        <div class="address" aria-label="Current webpage">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c5 5 5 13 0 18-5-5-5-13 0-18Z"/></svg>
+          <span id="page">Current tab</span>
+        </div>
       </div>
-    </section>
-    <button id="analyze" class="primary" type="button" disabled>Analyze form</button>
-  </header>
-  <main>
-    <p id="notice" class="notice" role="status">Open formER from the toolbar on the page you want to review.</p>
-    <section id="review" aria-label="Form results" hidden>
-      <h2 id="total"></h2>
-      <dl id="counts" aria-label="Results by status"></dl>
-      <label for="filter">Show fields</label>
-      <select id="filter"></select>
-      <div id="groups"></div>
-    </section>
-  </main>
-  <footer>
-    <div class="bulk-selection">
+      <div class="identity">
+        <div class="brand"><img src="../icons/icon48.png" width="28" height="28" alt="">formER</div>
+        <button id="connect" class="account-connect" type="button" hidden>
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M10 17l5-5-5-5m5 5H3m10-8h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5"/></svg>
+          <span id="connect-label">Connect account</span>
+        </button>
+        <details id="account" class="account" data-state="checking">
+          <summary class="account-summary" aria-disabled="true"><span class="account-dot" aria-hidden="true"></span><span id="account-title" role="status">Checking account</span></summary>
+          <div class="account-body">
+            <p id="account-caption" hidden>Connected account</p>
+            <p id="account-description"></p>
+            <p id="pair-code" hidden></p>
+            <div class="account-actions">
+              <button id="approval-page" class="secondary" type="button" hidden>Open approval page</button>
+              <button id="disconnect" class="text-action" type="button" hidden>Disconnect</button>
+            </div>
+          </div>
+        </details>
+      </div>
+      <p id="account-error" role="alert"></p>
+      <div class="review-heading">
+        <h1>Review form</h1>
+        <span id="analysis-status" class="sr-only" role="status"></span>
+        <button id="analyze" class="primary analyze-action" type="button" disabled>
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7V4h3m10 0h3v3m0 10v3h-3M7 20H4v-3m3-7h10m-10 4h6"/></svg>
+          <span id="analyze-label">Analyze form</span>
+        </button>
+      </div>
+    </header>
+    <main>
+      <div class="notice" id="notice-panel">
+        <svg class="notice-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 9h6m-6 4h6m-6 4h3"/></svg>
+        <p id="notice" role="status">Open formER from the toolbar on the page you want to review.</p>
+      </div>
+      <section id="review" aria-label="Form results" hidden>
+        <div class="overview">
+          <div class="overview-heading"><h2 id="total"></h2><span class="analysis-complete">Analyzed</span></div>
+          <dl id="counts" aria-label="Results by status"></dl>
+        </div>
+        <div class="filter-row"><label for="filter">Show fields</label><select id="filter"></select></div>
+        <div id="groups"></div>
+      </section>
+      <section id="fill-results" tabindex="-1" aria-label="Fill results" hidden></section>
+    </main>
+  </div>
+  <footer class="action-footer">
+    <div class="selection-row">
       <strong id="selection" aria-live="polite">0 fields selected</strong>
-      <button id="clear-selection" class="secondary" type="button" disabled>Clear selection</button>
+      <button id="clear-selection" class="text-action" type="button" disabled>Clear selection</button>
     </div>
-    <div id="fill-results" role="status" aria-live="polite"></div>
-    <button id="fill-all" class="primary" type="button" disabled>Fill all matched</button>
-    <button id="fill" class="secondary" type="button" disabled aria-describedby="fill-note">Fill selected fields</button>
-    <small id="fill-note">Review the page after filling. You submit the form yourself.</small>
+    <div id="fill-feedback" class="fill-feedback" hidden>
+      <span id="fill-status" role="status"></span>
+      <button id="show-fill-results" type="button" class="text-action" hidden>See results</button>
+    </div>
+    <div class="fill-actions">
+      <button id="fill-all" class="primary" type="button" disabled>Fill all matched</button>
+      <button id="fill" class="secondary" type="button" disabled aria-describedby="fill-note">Fill selected fields</button>
+    </div>
+    <small id="fill-note">You submit the form yourself.</small>
   </footer>
 </body>
 </html>

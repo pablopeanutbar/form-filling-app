@@ -55,18 +55,23 @@ function DevelopmentDownload() {
   </section>;
 }
 
-function PopupPreview() {
+function SidePanelPreview() {
   return <figure className="ext-preview">
-    <div className="ext-preview-backdrop" aria-hidden="true"><span /><span /><span /></div>
-    <div className="ext-popup" aria-hidden="true">
-      <div className="ext-popup-header"><FileCheck2 size={28} /><div><strong>formER</strong><small>Ready to detect</small></div><ArrowUpRight size={18} /></div>
-      <div className="ext-popup-body"><div className="ext-popup-page"><Globe size={19} /><span>Your current webpage<small>A form you want to check</small></span></div>
-        <h2>Start with the fields.</h2><p>Find the form fields on this page. Nothing will be filled in or submitted.</p>
-        <span className="ext-preview-button"><ScanLine size={18} />Detect fields</span>
+    <div className="ext-browser-showcase" aria-hidden="true">
+      <div className="ext-browser-toolbar">
+        <span className="ext-browser-dots"><i /><i /><i /></span>
+        <span className="ext-browser-address"><Globe size={13} />Current webpage</span>
       </div>
-      <div className="ext-popup-footer"><strong><i />Account not connected</strong><p>Connect to review suggestions from your saved information.</p><span>Open formER <ArrowUpRight size={14} /></span></div>
+      <div className="ext-browser-content">
+        <div className="ext-browser-page"></div>
+        <div className="ext-browser-panel">
+          <div className="ext-browser-brand"><FileCheck2 size={19} /><strong>formER</strong></div>
+          <strong className="ext-browser-title">Review form</strong>
+          <p>Analyze a form to start reviewing fields.</p>
+        </div>
+      </div>
     </div>
-    <figcaption>Popup preview · field detection, at your request.</figcaption>
+    <figcaption>formER side panel preview</figcaption>
   </figure>;
 }
 
@@ -118,7 +123,7 @@ export function Extension() {
           <p>Find the fields on your current page, see how they’re grouped, and understand what the form is asking for.</p>
           <div className="ext-hero-actions"><a className="ext-button" href="#get-extension">Get the Extension<ArrowRight size={17} aria-hidden="true" /></a><a className="ext-text-link" href="#capabilities">What it can do<ChevronDown size={16} aria-hidden="true" /></a></div>
           <p className="ext-hero-note">Connect your account for saved-answer suggestions. Automatic filling is not available yet.</p>
-        </div><PopupPreview />
+        </div><SidePanelPreview />
       </section>
 
       <section className="ext-capabilities" id="capabilities" aria-label="Current extension capabilities">

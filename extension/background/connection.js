@@ -9,10 +9,6 @@ const remove = async (key) => { await secureStorage(); await chrome.storage.loca
 const expired = (date) => !date || new Date(date).getTime() <= Date.now();
 const failure = (code, message) => Object.assign(new Error(message), { code });
 
-export function trustedPopup(sender) {
-  return sender.id === chrome.runtime.id && !sender.tab && sender.url === chrome.runtime.getURL('popup/popup.html');
-}
-
 async function api(path, { body, token, method = 'POST' } = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 45000);

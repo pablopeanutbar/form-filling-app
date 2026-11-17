@@ -100,7 +100,7 @@ test('skips sensitive, disabled, readonly and consent controls and detects a rev
     assert.equal(doc.getElementById('c').checked, false);
   });
 });
-test('worker binds fill to the active tab, panel document, analysis, and original webpage document', async () => {
+test('worker routes trusted popup requests and binds fill to the active tab and review documents', async () => {
   const { runInNewContext } = await import('node:vm');
   const { webcrypto } = await import('node:crypto');
   const source = readFileSync(new URL('../../extension/background/service-worker.js', import.meta.url), 'utf8');
@@ -108,6 +108,8 @@ test('worker binds fill to the active tab, panel document, analysis, and origina
   const event = (name) => ({ addListener: (callback) => { listeners[name] = callback; } });
   const tab = { id: 9, active: true, windowId: 3, url: 'https://test.example/form' };
   const panel = { id: 'former-test', url: extensionOrigin + 'sidepanel/review.html', documentId: 'panel-a' };
+  const popup = { id: panel.id, url: extensionOrigin + 'popup/review.html' };
+  let popupContexts = [{ documentId: 'popup-a' }];
   let connected = true;
   let fills = 0;
   let pageDocument = 'page-a';
@@ -119,7 +121,12 @@ test('worker binds fill to the active tab, panel document, analysis, and origina
   };
   const chrome = {
     runtime: { id: panel.id, getURL: (p) => extensionOrigin + p, onInstalled: event('install'),
-      onMessage: event('message'), sendMessage: async () => {} },
+      onMessage: event('message'), sendMessage: async () => {},
+      getContexts: async (filter) => {
+        assert.equal(filter.contextTypes.join(','), 'POPUP');
+        assert.equal(filter.documentUrls.join(','), popup.url);
+        return popupContexts;
+      } },
     storage: { session: storage },
     action: { onClicked: event('click') },
     scripting: { executeScript: async () => [{ documentId: 'page-a' }] },
@@ -139,7 +146,8 @@ test('worker binds fill to the active tab, panel document, analysis, and origina
     }
   };
   const startWorker = () => runInNewContext(source.replace(/^import .*\r?\n/, ''), {
-    chrome, crypto: webcrypto,
+    chrome, crypto: webcrypto, setInterval, clearInterval,
+    setTimeout: () => {},
     connectionActions: { CONNECTION_STATUS: async () => ({ state: connected ? 'connected' : 'disconnected' }) },
     withConnectionLock: (action) => Promise.resolve().then(action),
     analyzeFields: async () => ({ results: [
@@ -149,7 +157,7 @@ test('worker binds fill to the active tab, panel document, analysis, and origina
     ] })
   });
   startWorker();
-  const send = (request, sender = panel) => new Promise((resolve) => listeners.message({
+  const send = (request, sender = popup) => new Promise((resolve) => listeners.message({
     tabId: tab.id, windowId: tab.windowId, ...request
   }, sender, resolve));
   const analyze = async () => (await send({ type: 'ANALYZE_FORM' })).data.analysisId;
@@ -159,11 +167,23 @@ test('worker binds fill to the active tab, panel document, analysis, and origina
     ...overrides
   }, sender);
 
+  for (const sender of [{ ...popup, tab }, { ...popup, id: 'other-extension' },
+    { ...popup, url: extensionOrigin + 'popup/popup.html' }]) {
+    assert.equal(listeners.message({ type: 'CONNECTION_STATUS' }, sender, () => assert.fail()), false);
+  }
+  assert.equal((await send({ type: 'PING' }, panel)).status, 'PONG');
+  assert.equal((await send({ type: 'CONNECTION_STATUS' })).data.state, 'connected');
+  assert.equal((await send({ type: 'DETECT_FIELDS' })).fields.length, 3);
+  assert.equal((await send({ type: 'DETECT_FIELDS', windowId: 4 })).success, false);
   const first = await analyze();
   startWorker();
-  assert.equal((await send({ type: 'CONNECTION_STATUS' })).success, true);
-  assert.equal((await send({ type: 'DETECT_FIELDS' })).success, true);
+  popupContexts = [{ documentId: 'popup-reopened' }];
+  assert.equal((await fill(first, { mode: 'matched' })).success, false);
+  assert.equal((await send({ type: 'RESTORE_REVIEW' })).data.view.analysisId, first);
   assert.equal((await fill(first, { mode: 'matched' })).success, true);
+  popupContexts = [];
+  assert.equal((await send({ type: 'CONNECTION_STATUS', documentId: 'popup-reopened' })).success, false);
+  popupContexts = [{ documentId: 'popup-reopened' }];
   const old = first;
   const current = await analyze();
   assert.equal((await fill(old)).success, false);
@@ -210,22 +230,31 @@ test('React controlled text input commits the approved value to component state'
     root.unmount();
   });
 });
-test('panel selects matched fields in bulk and sends review entries only through manual approval', async () => {
+test('popup mounts the shared review and sends review entries only through manual approval', async () => {
   const readPanel = (name) => readFileSync(new URL('../../extension/sidepanel/' + name, import.meta.url), 'utf8');
-  const dom = new JSDOM(readPanel('review.html'), { runScripts: 'outside-only' });
+  const readPopup = (name) => readFileSync(new URL('../../extension/popup/' + name, import.meta.url), 'utf8');
+  const dom = new JSDOM(readPopup('review.html'), { runScripts: 'outside-only', url: extensionOrigin + 'popup/review.html' });
   const { window } = dom;
   const doc = window.document;
   const $ = (id) => doc.getElementById(id);
   const event = { addListener() {} };
   const requests = [];
+  const startup = [];
   const entries = [['a', 'matched', 'text'], ['b', 'matched', 'text'], ['c', 'needs_review', 'text'], ['d', 'matched', 'checkbox']];
   window.chrome = {
     windows: { getCurrent: async () => ({ id: 3 }) },
-    tabs: { query: async () => [{ id: 9 }], onActivated: event, onUpdated: event, onRemoved: event },
+    tabs: { query: async (query) => {
+      assert.equal(query.windowId, 3);
+      assert.equal(query.active, true);
+      return [{ id: 9, url: 'https://test.example/form' }];
+    }, onActivated: event, onUpdated: event, onRemoved: event },
     runtime: {
       onMessage: event,
+      getURL: (path) => extensionOrigin + path,
       async sendMessage(message) {
+        startup.push(message.type);
         if (message.type === 'CONNECTION_STATUS') return { success: true, data: { state: 'connected', account: { email: 'example@example.test' } } };
+        if (message.type === 'RESTORE_REVIEW') return { success: true, data: null };
         if (message.type === 'ANALYZE_FORM') return { success: true, data: {
           analysisId: 'first', expiresAt: Date.now() + 60000,
           fields: entries.map(([fieldId, , type]) => ({ fieldId, type, label: fieldId })),
@@ -238,10 +267,18 @@ test('panel selects matched fields in bulk and sends review entries only through
       }
     }
   };
+  window.fetch = async (url) => {
+    assert.equal(url, extensionOrigin + 'sidepanel/review.html');
+    return { ok: true, text: async () => readPanel('review.html') };
+  };
+  window.loadReview = () => window.eval(readPanel('review.js'));
   const settle = () => new Promise((resolve) => setImmediate(resolve));
   try {
-    window.eval(readPanel('review.js'));
+    const popupScript = readPopup('review.js').replace("import('../sidepanel/review.js')", 'window.loadReview()');
+    await window.eval(`(async () => {${popupScript}})()`);
     await settle();
+    assert.deepEqual(startup, ['CONNECTION_STATUS', 'RESTORE_REVIEW']);
+    assert.equal($('analyze').disabled, false);
     $('analyze').click();
     await settle();
     assert.equal(requests.length, 0);
@@ -251,17 +288,17 @@ test('panel selects matched fields in bulk and sends review entries only through
     assert.equal($('select-all').indeterminate, true);
     $('clear-selection').click();
     assert.equal($('selection').textContent, '0 fields selected');
-    doc.querySelector('[aria-label="Select suggestion for c"]').click();
+    doc.querySelector('[aria-label="Approve suggestion for c"]').click();
     $('fill-all').click();
     await settle();
     assert.deepEqual(Array.from(requests[0].proposals, (proposal) => proposal.fieldId), ['a', 'b']);
     assert.equal(requests[0].mode, 'matched');
-    assert.match($('fill-results').textContent, /2 filled/);
+    assert.match($('fill-status').textContent, /2 filled/);
     assert.equal($('selection').textContent, '1 field selected');
     $('fill').click();
     await settle();
     assert.deepEqual(Array.from(requests[1].proposals, (proposal) => proposal.fieldId), ['c']);
-    assert.match($('fill-results').textContent, /1 need attention/);
+    assert.match($('fill-status').textContent, /1 need attention/);
     assert.match($('fill-results').querySelector('details').textContent, /Existing answer/);
   } finally { window.close(); }
 });
