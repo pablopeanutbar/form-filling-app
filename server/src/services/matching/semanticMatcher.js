@@ -1,10 +1,12 @@
 import { pipeline } from '@huggingface/transformers';
 import { CANONICAL_FIELDS, getFieldByKey } from './fieldRegistry.js';
+import { derivations } from './derivations.js';
 
 let extractorInstance = null;
 let extractorPromise = null;
 let cachedCanonicalEmbeddings = null;
 let canonicalInitPromise = null;
+let operationEmbeddings = [];
 
 /**
  * Initialize or retrieve the singleton MiniLM pipeline
@@ -67,10 +69,12 @@ export const initCanonicalEmbeddings = async () => {
 
   canonicalInitPromise = (async () => {
     const extractor = await getExtractor();
-    const texts = CANONICAL_FIELDS.map(getCanonicalFieldText);
+    const operations = Object.entries(derivations);
+    const texts = [...CANONICAL_FIELDS.map(getCanonicalFieldText), ...operations.map(([, operation]) => operation.meaning)];
 
     const output = await extractor(texts, { pooling: 'mean', normalize: true });
     const rawVectors = output.tolist();
+    operationEmbeddings = operations.map(([id], index) => ({ id, vector: rawVectors[CANONICAL_FIELDS.length + index] }));
 
     cachedCanonicalEmbeddings = CANONICAL_FIELDS.map((fieldDef, idx) => ({
       key: fieldDef.key,
@@ -92,6 +96,9 @@ export const initCanonicalEmbeddings = async () => {
 export const buildFieldQueryText = (field) => {
   const parts = [];
   if (field.section) parts.push(`Section: ${field.section}`);
+  if (field.context?.headings?.length) parts.push(`Headings: ${field.context.headings.join(' / ')}`);
+  if (field.context?.nearby?.length) parts.push(`Nearby fields: ${field.context.nearby.join(', ')}`);
+  if (field.context?.instructions) parts.push(`Field instructions: ${field.context.instructions}`);
   if (field.label) parts.push(`Label: ${field.label}`);
   if (field.placeholder) parts.push(`Placeholder: ${field.placeholder}`);
   if (field.name) parts.push(`Name: ${field.name}`);
@@ -171,6 +178,11 @@ export const rankCandidatesBatch = async (fields, options = {}) => {
     for (let i = 0; i < fields.length; i++) {
       const fieldId = fields[i].fieldId || String(i);
       const qVec = queryVectors[i];
+      if (options.operationRankings) {
+        options.operationRankings.set(fieldId, operationEmbeddings
+          .map(({ id, vector }) => ({ id, score: cosineSimilarity(qVec, vector) }))
+          .filter(({ score }) => score >= minScore).sort((a, b) => b.score - a.score));
+      }
 
       const ranked = canonicals
         .map((item) => {

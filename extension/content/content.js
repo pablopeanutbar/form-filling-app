@@ -255,6 +255,14 @@
     return '';
   };
 
+  const resolveInstructions = (el) => cleanText((el.getAttribute('aria-describedby') || '').split(/\s+/).slice(0, 4)
+    .map((id) => el.ownerDocument.getElementById(id))
+    .filter((node) => node && !node.matches('input, textarea, select, output, [contenteditable]') &&
+      !node.querySelector('input, textarea, select, output, [contenteditable]'))
+    .map((node) => node.textContent).join(' '), 240);
+
+  const reviewLabel = (el) => [resolveLabel(el), resolveSection(el), resolveInstructions(el)].join(' | ');
+
   const resolveSection = (el) => {
     if (!el) return '';
     const doc = el.ownerDocument || (typeof document !== 'undefined' ? document : null);
@@ -373,6 +381,23 @@
     }
 
     const fields = [];
+    const groups = new Map();
+    const contextFor = (el, section) => {
+      const container = el.closest('fieldset, [role="group"], section, form');
+      if (!groups.has(container)) groups.set(container, 'group_' + groups.size);
+      const headingFor = (node) => node?.getAttribute('aria-label') ||
+        node?.querySelector(':scope > legend, :scope > h1, :scope > h2, :scope > h3')?.textContent || '';
+      const headings = [];
+      for (let node = container; node && headings.length < 3; node = node.parentElement?.closest('fieldset, [role="group"], section, form')) {
+        const heading = cleanText(headingFor(node), 120);
+        if (heading) headings.unshift(heading);
+      }
+      const localHeading = Array.from(container?.querySelectorAll(':scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6') || [])
+        .filter((heading) => el.compareDocumentPosition(heading) & 2).at(-1);
+      return { formTitle: cleanText(headingFor(el.form), 160), group: groups.get(container),
+        headings: [...new Set([...headings, cleanText(section, 120), cleanText(localHeading?.textContent, 120)].filter(Boolean))].slice(-3),
+        nearby: [], instructions: resolveInstructions(el) };
+    };
     let sessionIndex = 0;
 
     for (const el of individualControls) {
@@ -417,6 +442,7 @@
         label,
         placeholder,
         section,
+        context: contextFor(el, section),
         options,
         optionsTruncated,
         required,
@@ -461,14 +487,32 @@
         label: groupLabel || name,
         placeholder: '',
         section,
+        context: contextFor(firstRadio, section),
         options: options.slice(0, 50),
         optionsTruncated: options.length > 50,
         required: isRequired
       });
     }
 
+    const fieldsBySection = new Map();
+    for (const field of fields) {
+      const key = field.context.group + ':' + field.section;
+      if (!fieldsBySection.has(key)) fieldsBySection.set(key, []);
+      fieldsBySection.get(key).push(field);
+    }
+    for (const related of fieldsBySection.values()) {
+      related.forEach((field, index) => {
+        field.context.nearby = related.slice(Math.max(0, index - 2), index + 3)
+          .filter((other) => other !== field).map((other) => cleanText(other.label, 120)).filter(Boolean);
+      });
+    }
     if (targets) {
-      for (const field of fields) targets.get(field.fieldId).field = field;
+      for (const field of fields) {
+        // Neighbor ordering and generated group IDs can shift when unrelated fields
+        // are inserted. Only compare context that changes the target's meaning.
+        const { headings, instructions, formTitle } = field.context;
+        targets.get(field.fieldId).field = { ...field, context: { headings, instructions, formTitle } };
+      }
     }
     return {
       success: true,
@@ -510,7 +554,7 @@
         const current = new Map();
         extractFormFields(document, current);
         const results = await globalThis.formERWriter.apply(snapshot.targets, current, request.proposals, {
-          labelFor: (el) => [resolveLabel(el), resolveSection(el)].join(' | '),
+          labelFor: reviewLabel,
           excluded: isSensitiveOrExcluded,
           stillCurrent: () => analysis === snapshot && location.href === snapshot.url && document.visibilityState === 'visible'
         });
@@ -528,7 +572,7 @@
         if (targets) {
           for (const target of targets.values()) {
             target.forms = target.elements.map((el) => el.form);
-            target.signature = globalThis.formERWriter.signature(target.elements, (el) => [resolveLabel(el), resolveSection(el)].join(' | '));
+            target.signature = globalThis.formERWriter.signature(target.elements, reviewLabel);
           }
           analysis = { id: request.analysisId, targets, url: location.href, expiresAt: Date.now() + 5 * 60 * 1000 };
         }

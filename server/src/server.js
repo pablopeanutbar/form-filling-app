@@ -14,7 +14,8 @@ const startServer = async () => {
   await connectDB();
 
   // Start Express server
-  const server = app.listen(env.PORT, () => {
+  const privateGemini = env.NODE_ENV === 'development' && env.GEMINI_MATCHING_ENABLED && env.GEMINI_PRIVATE_SYNTHETIC_DEV === 'true';
+  const server = app.listen(env.PORT, privateGemini ? '127.0.0.1' : undefined, () => {
     console.log(`[Server] formER Backend running on port ${env.PORT} [${env.NODE_ENV}]`);
     console.log(`[Server] Health check: http://localhost:${env.PORT}/api/v1/health`);
   });

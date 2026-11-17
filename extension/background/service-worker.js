@@ -288,8 +288,8 @@ function handleReviewMessage(message, reviewDocumentId, sendResponse) {
       review.view = {
         fields: extracted.fields.map(({ fieldId, type, label, options, optionsTruncated, constraints }) =>
           ({ fieldId, type, label, options, optionsTruncated, constraints: { multiple: Boolean(constraints?.multiple) } })),
-        results: matched.results.map(({ fieldId, status, value, displayValue, reason, source }) =>
-          ({ fieldId, status, value, displayValue, reason, source })),
+        results: matched.results.map(({ fieldId, status, value, displayValue, reason, source, method }) =>
+          ({ fieldId, status, value, displayValue, reason, source, derived: method === 'derived' })),
         analysisId: review.id,
         expiresAt: review.expiresAt
       };

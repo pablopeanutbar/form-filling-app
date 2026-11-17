@@ -24,6 +24,10 @@ const envSchema = z.object({
   SESSION_MAX_AGE_MS: z.coerce.number().default(604800000), // 7 days in ms
   ALLOWED_ORIGINS: z.string().default('http://localhost:5173'),
   EXTENSION_IDS: extensionIdList,
+  GEMINI_API_KEY: z.string().default(''),
+  GEMINI_PRIVATE_SYNTHETIC_DEV: z.enum(['true', 'false']).default('false'),
+  GEMINI_MODEL: z.string().trim().min(1).default('gemini-3.5-flash-lite'),
+  GEMINI_MATCHING_ENABLED: z.enum(['true', 'false']).default('false').transform((value) => value === 'true'),
   EXTENSION_DEV_IDS: extensionIdList
 });
 

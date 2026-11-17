@@ -1,6 +1,7 @@
 import { identifyField } from './fieldIdentity.js';
 import { getFieldByKey } from './fieldRegistry.js';
 import { validateDestination } from './destinationValidation.js';
+import { calendarDate, derivations } from './derivations.js';
 
 /**
  * Extract value from user profile using canonical key and qualification context
@@ -18,18 +19,16 @@ export const extractProfileValue = (profile, canonicalKey, field = {}) => {
     let val = profile.personal?.[sub];
     if (['birthMonth', 'birthDay', 'birthYear'].includes(sub)) {
       const date = profile.personal?.dateOfBirth;
-      const parsed = typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date) ? new Date(date) : null;
+      const parsed = calendarDate(date);
       const index = { birthYear: 0, birthMonth: 1, birthDay: 2 }[sub];
-      val = parsed && Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === date
+      val = parsed
         ? Number(date.split('-')[index]) : null;
     }
     if (sub === 'middleInitial' && profile.personal?.middleName?.trim()) {
-      const middle = profile.personal.middleName.trim();
-      // Multiple middle names need an explicit choice of initials.
-      val = /^\p{L}[\p{L}\p{M}]*$/u.test(middle) ? Array.from(middle)[0] : null;
+      val = derivations.middle_initial.execute([profile.personal.middleName]);
     }
     if (sub === 'fullName' && !val?.trim() && profile.personal?.firstName?.trim() && profile.personal?.lastName?.trim()) {
-      val = [profile.personal.firstName, profile.personal.middleName, profile.personal.lastName].filter((part) => part?.trim()).map((part) => part.trim()).join(' ');
+      val = derivations.full_name.execute([profile.personal.firstName, profile.personal.middleName, profile.personal.lastName]);
     }
     return { value: val !== undefined && val !== null ? val : null, recordId: null };
   }
@@ -72,10 +71,14 @@ export const extractProfileValue = (profile, canonicalKey, field = {}) => {
       if (levelKey === 'undergraduate') {
         return ['undergraduate', 'bachelor', 'graduation', 'ug', 'b.tech', 'btech', 'b.e', 'be', 'b.sc', 'bsc', 'bca', 'bba'].includes(el);
       }
+      if (levelKey === 'postgraduate') {
+        return ['postgraduate', 'post graduate', 'post graduation', 'master', 'masters', 'pg', 'm.tech', 'mtech', 'm.sc', 'msc', 'mba', 'mca'].includes(el);
+      }
       return false;
     };
 
-    const matchingEdus = profile.education.filter((e) => matchLevel(e.qualificationLevel));
+    const completed = identifyField(field)?.completedQualification;
+    const matchingEdus = profile.education.filter((e) => matchLevel(e.qualificationLevel) && (!completed || e.resultStatus === 'passed'));
     if (matchingEdus.length === 0) {
       return {
         value: null,
@@ -254,6 +257,7 @@ export const violatesNegativeGuards = (field, candidateKey) => {
   const identity = identifyField(field);
   if (/^personal\.birth(?:Month|Day|Year)$|^professional\.currentWork\./.test(candidateKey) && identity?.key !== candidateKey) return true;
   if (identity?.blocked || (identity?.key && identity.key !== candidateKey)) return true;
+  if (candidateKey.startsWith('education.postgraduate.') && identity?.key !== candidateKey) return true;
   const label = (field.label || '').toLowerCase();
   const section = (field.section || '').toLowerCase();
   const combined = `${field.section || ''} ${field.label || ''} ${field.name || ''} ${field.id || ''} ${field.placeholder || ''}`.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase().replace(/[_-]/g, ' ');
@@ -271,10 +275,10 @@ export const violatesNegativeGuards = (field, candidateKey) => {
   if (candidateKey.startsWith('education.undergraduate') && /class\s*(10|12|x|xii)\b/.test(combined)) return true;
 
   // Father vs Mother vs Applicant
-  if (candidateKey === 'personal.fatherName' && (combined.includes('mother') || combined.includes('guardian'))) {
+  if (candidateKey === 'personal.fatherName' && identity?.key !== candidateKey && (combined.includes('mother') || combined.includes('guardian'))) {
     return true;
   }
-  if (candidateKey === 'personal.motherName' && (combined.includes('father') || combined.includes('guardian'))) {
+  if (candidateKey === 'personal.motherName' && identity?.key !== candidateKey && (combined.includes('father') || combined.includes('guardian'))) {
     return true;
   }
   if (candidateKey === 'personal.fullName' && (combined.includes('father') || combined.includes('mother') || combined.includes('guardian') || combined.includes('institute') || combined.includes('school') || combined.includes('college'))) {
@@ -393,7 +397,7 @@ export const validateCandidate = (field, candidate, profile, allCandidates = [])
     const top2 = allCandidates[1];
     if (top1.score - top2.score < 0.05 && top2.score >= 0.50) {
       isAmbiguous = true;
-      ambiguityReason = `Ambiguous semantic match: "${top1.canonicalKey}" (${(top1.score * 100).toFixed(0)}%) vs "${top2.canonicalKey}" (${(top2.score * 100).toFixed(0)}%)`;
+      ambiguityReason = 'More than one saved detail could fit. Confirm this answer before filling.';
     }
   }
 
@@ -452,6 +456,15 @@ export const validateCandidate = (field, candidate, profile, allCandidates = [])
   }
 
   // Case C: Deterministic match with valid profile value -> MATCHED
+  if (candidate.method === 'gemini') {
+    return {
+      fieldId, canonicalKey: candidate.canonicalKey, value: formattedValue, displayValue,
+      educationRecordId: educationRecordId || undefined, status: 'needs_review',
+      confidence: 0, method: 'gemini', reason: 'Confirm this suggestion before filling.',
+      needsReview: true
+    };
+  }
+
   if (isDeterministic) {
     return {
       fieldId,
@@ -478,7 +491,7 @@ export const validateCandidate = (field, candidate, profile, allCandidates = [])
       status: 'needs_review',
       confidence: Math.round(baseConfidence * 100) / 100,
       method: 'semantic_embedding',
-      reason: candidate.explanation || `Matched via semantic similarity (${(baseConfidence * 100).toFixed(1)}%)`,
+      reason: 'Confirm this suggestion before filling.',
       needsReview: true // Semantic match always flags user review recommendation
     };
   }
@@ -494,7 +507,7 @@ export const validateCandidate = (field, candidate, profile, allCandidates = [])
       status: 'needs_review',
       confidence: Math.round(baseConfidence * 100) / 100,
       method: 'semantic_embedding',
-      reason: `Moderate semantic similarity (${(baseConfidence * 100).toFixed(1)}%). Requires user verification.`,
+      reason: 'Confirm this suggestion before filling.',
       needsReview: true
     };
   }
@@ -507,7 +520,7 @@ export const validateCandidate = (field, candidate, profile, allCandidates = [])
     status: 'unmatched',
     confidence: Math.round(baseConfidence * 100) / 100,
     method: candidate.method,
-    reason: `Candidate similarity (${(baseConfidence * 100).toFixed(1)}%) is below acceptable threshold`,
+    reason: 'No sufficiently clear match was found.',
     needsReview: false
   };
 };

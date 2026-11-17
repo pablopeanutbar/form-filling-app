@@ -14,7 +14,10 @@ export const matchFields = async (req, res, next) => {
     const profile = await getOrCreateProfile(userId);
 
     // Run matching pipeline (deterministic + MiniLM semantic + validation)
-    const matchResult = await matchFormFields(fields, profile);
+    const local = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
+    const localHost = /^(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/i.test(req.headers.host || '');
+    const forwarded = Object.keys(req.headers).some((key) => key === 'forwarded' || key.startsWith('x-forwarded-'));
+    const matchResult = await matchFormFields(fields, profile, { localDevelopmentRequest: local && localHost && !forwarded });
 
     return res.status(200).json({
       success: true,

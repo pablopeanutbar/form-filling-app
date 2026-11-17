@@ -26,7 +26,16 @@ export function validateDestination(value, field, key = '') {
   let formattedValue = value;
   const string = String(value).trim();
   if (constraints.multiple) return invalid('This field accepts multiple answers and needs manual review.');
-  if (constraints.pattern) return invalid('This field has a custom format. Please check it yourself.');
+  if (constraints.pattern && ['text', 'search', 'tel', 'email', 'url'].includes(constraints.inputType || type)) {
+    // Interpret a bounded ASCII digit count. Never execute a webpage-supplied regex.
+    const digits = /^(?:\[0-9\]|\\d)\{([1-9]\d?)(?:,([1-9]\d?))?\}$/.exec(constraints.pattern);
+    if (!digits) return invalid('This field has a custom format. Please check it yourself.');
+    const min = Number(digits[1]);
+    const max = Number(digits[2] ?? digits[1]);
+    if (!/^\d+$/.test(string) || string.length < min || string.length > max) {
+      return invalid('The saved answer does not have the required number of digits.');
+    }
+  }
   if (constraints.inputType && ['month', 'week', 'time', 'datetime-local'].includes(constraints.inputType)) return invalid('This date or time format needs manual review.');
   if (type === 'number') {
     if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(string) || !Number.isFinite(Number(string))) return invalid('The saved answer is not a valid number.');

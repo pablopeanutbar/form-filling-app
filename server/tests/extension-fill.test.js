@@ -89,6 +89,17 @@ test('uses element identity across inserted fields and rejects replacements, typ
   });
 });
 
+test('changing a linked age cutoff invalidates the approved field before filling', async () => {
+  await withForm('<fieldset><legend>Applicant</legend><label for="age">Age</label><input id="age" aria-describedby="cutoff"><p id="cutoff">As of 2025-01-01</p><label for="other">First name</label><input id="other"></fieldset>', async (window, fill, send) => {
+    const { fields } = await send({ type: 'EXTRACT_FIELDS' });
+    assert.equal(fields[0].context.instructions, 'As of 2025-01-01');
+    assert.deepEqual(Array.from(fields[0].context.nearby), ['First name']);
+    window.document.getElementById('cutoff').textContent = 'As of 2024-01-01';
+    assert.equal((await fill({ age: '25' })).results[0].status, 'skipped');
+    assert.equal(window.document.getElementById('age').value, '');
+  });
+});
+
 test('skips sensitive, disabled, readonly and consent controls and detects a reverted answer', async () => {
   await withForm('<label for="b">Bank account</label><input id="b"><input id="d" disabled><input id="r" readonly><label for="c">Accept consent</label><input id="c" type="checkbox"><input id="t" aria-label="Name">', async (window, fill, send) => {
     const doc = window.document;

@@ -113,7 +113,7 @@ async function disconnect() {
 export async function analyzeFields(fields) {
   const auth = await authorization();
   // Explicit metadata allowlist: no URL, page title, entered values, or whole DOM.
-  const permitted = ['fieldId', 'label', 'name', 'type', 'id', 'placeholder', 'section', 'options', 'optionsTruncated', 'required', 'constraints'];
+  const permitted = ['fieldId', 'label', 'name', 'type', 'id', 'placeholder', 'section', 'context', 'options', 'optionsTruncated', 'required', 'constraints'];
   const metadata = fields.map((field) => Object.fromEntries(permitted.filter((key) => field[key] !== undefined).map((key) => [key, field[key]])));
   try { return await api('/match', { token: auth.accessToken, body: { fields: metadata } }); }
   catch (error) { if (error.code === 'CONNECTION_EXPIRED') await remove('authorization'); throw error; }

@@ -101,6 +101,7 @@ function updateSelection() {
 }
 
 function explanation(result) {
+  if (result.derived && result.reason && (result.value == null || result.status === 'matched')) return result.reason;
   if (result.status === 'unsupported') return 'Complete this field on the page.';
   if (result.status === 'unmatched') {
     if (/ambiguous|conflicting/i.test(result.reason || '')) return 'The form does not make clear which saved detail it needs.';

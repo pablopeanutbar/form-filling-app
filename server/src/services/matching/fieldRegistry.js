@@ -776,6 +776,15 @@ export const CANONICAL_FIELDS = [
 /**
  * Get all canonical registry entries
  */
+for (const field of CANONICAL_FIELDS.filter(({ key }) => key.startsWith('education.undergraduate.'))) {
+  CANONICAL_FIELDS.push({
+    key: field.key.replace('undergraduate', 'postgraduate'),
+    label: 'Postgraduate ' + field.key.split('.').at(-1),
+    description: 'Postgraduate qualification ' + field.key.split('.').at(-1),
+    category: 'education', dataType: field.dataType, aliases: []
+  });
+}
+
 export const getRegistry = () => CANONICAL_FIELDS;
 
 /**

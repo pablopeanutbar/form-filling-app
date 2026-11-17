@@ -1,5 +1,26 @@
 # formER — Development Progress Tracking
 
+## 31-field contextual form audit
+
+- Ran the desktop's original admissions HTML through extraction, request validation, a synthetic Mongoose profile, the matcher, popup selection and DOM writing in JSDOM. The complete fixture improved from 19 to 25 correct fills; the incomplete fixture improved from 6 to 8. Both final runs had zero incorrect fills, with 6 and 23 correct abstentions respectively. No fields needed MiniLM or Gemini in either final run.
+- Captured nearby subsection headings, resolved specific parent roles within umbrella headings, applied linked qualification rules and passed-record requirements, and recognized explicit current-age wording. The validator now supports bounded digit-count patterns while preserving postal codes as strings. Unsupported IDs, declarations and income abstain before semantic retrieval.
+- All 25 focused regressions passed. The audit confirmed input and change events and verified DOM readback for every selected field. The separate answer key and historical profile were unavailable. The fixtures use the brief's semantic expectations and independently chosen fictional values. See CONTEXTUAL_FORM_AUDIT.md for the full matrix and rerun command.
+
+## Contextual matching and answer planning
+
+- The extension sends bounded form and section context alongside the existing field metadata. Gemini receives only filtered matching vocabulary, opaque grouping, safe constraint flags, and eligible identities or operation specifications. Saved answers, raw instructions, record IDs and dropdown values stay out of Gemini requests.
+- Private synthetic development uses Gemini automatically with both development flags and a configured key. The server binds to IPv4 loopback in that mode and excludes forwarded requests. Production and ordinary development use local matching. Removed the per-analysis checkbox.
+- The answer planner supports applicant age, birth year, complete name, middle initial, and percentage from explicitly saved marks for the same qualification. Unresolved age cutoffs and ambiguous qualifications cannot produce fillable values. Postgraduate records now resolve separately. Cloud suggestions always require review.
+- Focused matching and current extension tests passed, including a regression for a changed cutoff after review. The synthetic comparison produced four correct derivations, four correct abstentions, one correct direct match, zero unsafe suggestions, and one mocked request. Live provider quality and manual RoboForm behavior are unverified. A legacy popup test already fails on the button label in HEAD.
+
+## Optional Gemini field classification
+
+- Added the official Google GenAI backend SDK and disabled-by-default configuration for gemini-3.5-flash-lite. The initial opt-in was replaced by the private development gate described above. Saved values, database record IDs, URLs, options, existing answers and credentials are excluded.
+- Unresolved non-deterministic decisions can receive cloud suggestions after local candidate eligibility checks. Every suggestion passes the existing value resolver and destination validator and requires manual review. Ambiguous qualification levels and records continue to abstain. Postgraduate resolver support remains pending.
+- Added an eight-second timeout, no SDK retries, one outstanding request, two starts per minute and 100 per UTC day per process. A bounded five-minute classification cache stores no saved values. Provider and output-validation failures preserve original decisions. Multiple backend processes require a shared limiter before deployment.
+- Nine focused synthetic tests passed for cloud request privacy, candidate guards, cached-value revalidation, invalid outputs, disabled mode and existing matching identities. JavaScript syntax checks passed. No live Gemini calls or measured accuracy improvement are claimed.
+- Added npm run evaluate:gemini in server for synthetic baseline/cloud comparisons. The command uses a mock by default and accepts --live with private development configured. Live quota availability and provider quality require separate verification.
+
 ## Premium toolbar popup
 
 - Refined the popup to 398 by 580 pixels with 13 px side padding, a top address bar, and denser review spacing. The account button starts existing pairing directly, and the connected disclosure shows the current email and disconnect action in the page flow.
