@@ -11,6 +11,8 @@ import { errorHandler } from './middleware/error.middleware.js';
 import { csrfErrorHandler } from './middleware/csrf.middleware.js';
 
 const app = express();
+
+app.set('trust proxy', 1);
 const isProduction = env.NODE_ENV === 'production';
 
 // Security Headers
@@ -86,6 +88,10 @@ app.use(
   })
 );
 
+app.use('/api/v1', (req, res, next) => {
+  res.setHeader('Cache-Control', 'private, no-store');
+  next();
+});
 // Mount API v1 Routes
 app.use('/api/v1', apiRoutes);
 
