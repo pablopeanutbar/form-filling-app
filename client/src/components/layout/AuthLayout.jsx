@@ -4,6 +4,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import './AuthLayout.css';
+import { FloatingPathsBackground } from '../ui/floating-paths';
 
 const jitter = (index) => {
   const value = Math.sin(index + 1) * 10_000;
@@ -48,6 +49,7 @@ export const AuthLayout = ({ children, title, subtitle }) => (
       </div>
     </aside>
     <main className="auth-main">
+      <FloatingPathsBackground position={-1} className="auth-form-background" />
       <Link to="/" className="auth-home auth-enter"><ChevronLeft size={16} aria-hidden="true" />Back to home</Link>
       <div className="auth-panel">
         <AuthBrand className="auth-mobile-brand auth-enter" />

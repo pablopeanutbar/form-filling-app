@@ -1,5 +1,11 @@
 # formER — Development Progress Tracking
 
+## Mobile layout refinement
+
+- Added a reusable JSX InteractiveHoverButton adapted from the Magic UI / 21st.dev expanding-dot pattern, with router links, visible touch arrows, disabled states and reduced motion. Dashboard primary, incomplete-row and extension actions use the component.
+- Reused the shared flowing paths behind login and signup forms, reduced mobile landing secondary copy, refined demo spacing and enlarged navigation touch targets.
+- Frontend build passed. Existing frontend checks passed after rerunning the HTTP auth tests with sandbox loopback access, and the new button check passed. Focused Chrome checks used synthetic API responses at 320, 375, 390, 768 and 1440 px across landing, dashboard, login and signup, with no document overflow, clipped checked controls or visible targets below 44 px. The build reports a main chunk above 500 kB.
+
 ## Production Deployment for Gemini Contextual Matching
 
 - Removed development-only restrictions (`NODE_ENV === 'development'`, `GEMINI_PRIVATE_SYNTHETIC_DEV === 'true'`, localhost IP checks, and `127.0.0.1` loopback binding) that blocked Gemini contextual matching from running on hosted Render backend deployments.

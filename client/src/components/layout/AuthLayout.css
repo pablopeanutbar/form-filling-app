@@ -67,6 +67,9 @@
 .former-auth .auth-home { position: absolute; top: 28px; left: 28px; display: inline-flex; align-items: center; gap: 5px; min-height: 44px; padding: 0 10px; border-radius: 8px; color: #515154; font-size: 13px; text-decoration: none; transition: background .2s, color .2s; }
 .former-auth .auth-home:hover { background: #f5f5f7; color: #111; }
 .former-auth .auth-panel { position: relative; width: 100%; max-width: 384px; margin: auto; }
+.former-auth .auth-form-background { position:absolute; inset:0; z-index:-1; pointer-events:none; overflow:hidden; opacity:.22; }
+.former-auth .auth-main { isolation:isolate; }
+.former-auth .auth-form-background .floating-paths-art { height:100%; }
 .former-auth .auth-mobile-brand { display: none; }
 .former-auth .auth-heading { margin-bottom: 30px; }
 .former-auth .auth-heading h1 { margin: 0 0 12px; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(36px, 3.4vw, 48px); font-weight: 400; letter-spacing: -1.8px; line-height: 1.12; }

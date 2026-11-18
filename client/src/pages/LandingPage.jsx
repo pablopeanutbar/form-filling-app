@@ -2043,6 +2043,8 @@ const CSS = `
 .ac-foot-social { display: flex; gap: 16px; }
 
 /* Container Responsive Queries */
+.ac-logo, .ac-nav a, .ac-login-link, .ac-pill { min-height:44px; }
+.ac-logo, .ac-login-link { display:inline-flex; align-items:center; }
 @container (max-width: 900px) {
   .ac-nav { display: none; }
   .ac-head-auth { display: none; }
@@ -2060,6 +2062,27 @@ const CSS = `
 }
 
 @container (max-width: 600px) {
+  .ac-alt-label, .ac-alt-soil, .ac-field-cap, .ac-map-stage .ac-map-kicker,
+  .ac-map-stage .ac-map-kicker + p, .ac-strip-head p, .ac-show-sub,
+  .ac-demo-tab small, .ac-map-meta { display:none; }
+  .ac-head { padding-inline:16px; }
+  .ac-burger { min-width:44px; min-height:44px; }
+  .ac-logo { min-height:44px; display:inline-flex; align-items:center; }
+  .ac-pill, .ac-login-link, .ac-menu a, .ac-demo-tab, .ac-map-years button, .ac-foot-cols a { min-height:44px; }
+  .ac-foot-cols a { display:inline-flex; align-items:center; }
+  .ac-hero-title { font-size:clamp(38px, 11cqi, 64px); }
+  .ac-hero-button { margin-top:12px; }
+  .ac-demo-container { padding-inline:12px; }
+  .ac-demo-stage { padding:12px; gap:16px; }
+  .ac-demo-stage > *, .ac-demo-form-card, .ac-demo-assistant-card { min-width:0; overflow-wrap:anywhere; }
+  .ac-demo-tabs { gap:8px; flex-wrap:wrap; }
+  .ac-demo-tab { padding:8px 12px; }
+  .ac-demo-tab span { font-size:12px; }
+  .ac-demo-form-header { flex-wrap:wrap; gap:6px; }
+  .ac-show { margin-top:64px; }
+  .ac-crop-body { max-width:calc(100% - 32px); font-size:14px; }
+  .ac-foot { padding-top:64px; }
+  .ac-foot-cols { gap:24px; }
   .ac-field-art { width: 72%; }
   .ac-line { white-space: normal; text-wrap: balance; }
   .ac-crop-stats { grid-template-columns: 1fr; }
