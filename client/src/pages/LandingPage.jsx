@@ -4,6 +4,7 @@ import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { MorphSVGPlugin } from 'gsap/MorphSVGPlugin';
 import { useAuth } from '../context/AuthContext.jsx';
+import { InteractiveHoverButton } from '../components/ui/interactive-hover-button.jsx';
 
 /**
  * formER Public Landing Page
@@ -513,7 +514,6 @@ export const LandingPage = () => {
           delay: 0.15
         });
 
-        gsap.from(q('.ac-hud-read'), { opacity: 0, x: 20, duration: 1, delay: 0.8, ease: 'power3.out' });
 
         const heroTl = gsap.timeline({
           defaults: { ease: 'none' },
@@ -971,10 +971,9 @@ export const LandingPage = () => {
                 <span className="ac-line">{chars('Every form.', 'ac-hero-char')}</span>
               </h1>
               <div className="ac-hero-cta">
-                <Link to={isAuthenticated ? '/app' : '/register'} className="ac-pill ac-hero-button">
-                  <span>{isAuthenticated ? 'Go to dashboard' : 'Get started'}</span>
-                  <b aria-hidden="true">→</b>
-                </Link>
+                <InteractiveHoverButton to={isAuthenticated ? '/app' : '/register'} className="ac-hero-button">
+                  {isAuthenticated ? 'Go to dashboard' : 'Get started'}
+                </InteractiveHoverButton>
               </div>
             </div>
 
@@ -1016,13 +1015,6 @@ export const LandingPage = () => {
                   <i className="ac-hud-mark" />
                 </div>
                 <span>03</span>
-              </div>
-              <div className="ac-hud-read">
-                <span>
-                  Phase <b data-stage-num>01</b>
-                </span>
-                <small>Form Intelligence</small>
-                <small>Readiness Matrix</small>
               </div>
             </div>
 
@@ -1642,7 +1634,7 @@ const CSS = `
   text-shadow: 0 6px 40px rgba(10,25,45,.4);
 }
 .ac-hero-cta { margin-top: clamp(16px, 3vh, 28px); }
-.ac-hero-button { height: 50px; padding: 0 24px; font-size: 15px; background: #0071E3; pointer-events: auto; }
+.ac-hero-button { min-height: 50px; padding: 10px 24px; border-color: transparent; font-size: 15px; pointer-events: auto; }
 .ac-line { display: block; overflow: hidden; padding: 0 .04em .08em; white-space: nowrap; }
 .ac-word { display: inline-block; white-space: nowrap; }
 .ac-hero-char, .ac-crop-char { display: inline-block; will-change: transform; }
@@ -1703,9 +1695,6 @@ const CSS = `
 .ac-hud-rail { position: relative; width: 12px; height: min(24vh, 200px); background: repeating-linear-gradient(180deg, currentColor 0 1px, transparent 1px 11px); opacity: .8; }
 .ac-hud-mark { position: absolute; left: -6px; right: -6px; top: 0; height: 100%; }
 .ac-hud-mark::before { content: ""; position: absolute; left: 0; right: 0; top: -1px; height: 3px; background: currentColor; }
-.ac-hud-read { display: flex; flex-direction: column; font-size: 12px; font-weight: 600; }
-.ac-hud-read b { font-size: 28px; font-weight: 300; font-variant-numeric: tabular-nums; }
-.ac-hud-read small { font-size: 10px; letter-spacing: .16em; text-transform: uppercase; opacity: .75; margin-top: 2px; }
 
 .ac-hero-cue {
   position: absolute;
@@ -2092,7 +2081,6 @@ const CSS = `
   .ac-crop-body { margin-top: 180px; }
   .ac-hud-scale { display: none; }
   .ac-hud { top: 80px; transform: none; }
-  .ac-hud-read b { font-size: 22px; }
 }
 
 /* Reduced Motion Mode */

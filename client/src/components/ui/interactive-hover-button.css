@@ -7,17 +7,22 @@
 }
 .interactive-hover-button-compact { padding:8px 12px; font-size:11px; flex-shrink:0; }
 .ihb-rest { display:flex; align-items:center; justify-content:center; gap:8px; }
-.ihb-dot { width:8px; height:8px; flex:none; border-radius:50%; background:#0071e3; transition:transform 300ms; z-index:-1; }
-.ihb-label { display:inline-block; transition:transform 300ms, opacity 300ms; }
-.ihb-over { position:absolute; inset:0; display:flex; justify-content:center; align-items:center; gap:8px; padding:8px; color:#fff; transform:translateX(48px); opacity:0; transition:transform 300ms,opacity 300ms; }
+.interactive-hover-button::before {
+  content:""; position:absolute; left:16px; top:50%; width:300%; aspect-ratio:1;
+  border-radius:50%; background:#0071e3; z-index:-1;
+  transform:translate(-50%,-50%) scale(0);
+  transition:transform 550ms cubic-bezier(.22,1,.36,1);
+}
+.ihb-label { display:inline-block; transition:transform 500ms cubic-bezier(.22,1,.36,1), opacity 450ms ease; }
+.ihb-over { position:absolute; inset:0; display:flex; justify-content:center; align-items:center; gap:8px; padding:8px; color:#fff; transform:translateX(24px); opacity:0; transition:transform 550ms cubic-bezier(.22,1,.36,1),opacity 500ms ease; }
 .interactive-hover-button:focus-visible { outline:2px solid #0071e3; outline-offset:3px; }
 .interactive-hover-button[aria-disabled="true"] { opacity:.5; cursor:default; }
 @media (hover:hover) and (pointer:fine) and (prefers-reduced-motion:no-preference) {
   .ihb-touch-arrow { display:none; }
-  .interactive-hover-button:not([aria-disabled="true"]):is(:hover,:focus-visible) .ihb-dot { transform:scale(100.8); }
-  .interactive-hover-button:not([aria-disabled="true"]):is(:hover,:focus-visible) .ihb-label { transform:translateX(48px); opacity:0; }
+  .interactive-hover-button:not([aria-disabled="true"]):is(:hover,:focus-visible)::before { transform:translate(-50%,-50%) scale(1); }
+  .interactive-hover-button:not([aria-disabled="true"]):is(:hover,:focus-visible) .ihb-label { transform:translateX(24px); opacity:0; }
   .interactive-hover-button:not([aria-disabled="true"]):is(:hover,:focus-visible) .ihb-over { transform:translateX(0); opacity:1; }
 }
 @media (prefers-reduced-motion:reduce) {
-  .ihb-dot,.ihb-label,.ihb-over { transition:none; }
+  .interactive-hover-button::before,.ihb-label,.ihb-over { transition:none; }
 }

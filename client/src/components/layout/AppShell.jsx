@@ -1,13 +1,12 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, UserRound, History, Settings2, MessageSquare, Menu, ChevronUp, LogOut, FileCheck2, ArrowUp } from 'lucide-react';
+import { LayoutDashboard, UserRound, History, Settings2, MessageSquare, Menu, ChevronUp, LogOut, FileCheck2, Download, ArrowUp } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { useUnsaved } from '../../context/UnsavedContext.jsx';
 import { useSmoothScrolling } from '../../hooks/useSmoothScrolling.js';
 import { Dialog } from '../common/Dialog.jsx';
 import { FloatingPathsBackground } from '../ui/floating-paths';
 import LineSidebar from '../ui/LineSidebar.jsx';
-import { InteractiveHoverButton } from '../ui/interactive-hover-button.jsx';
 import '../../styles/workspace.css';
 
 const navigation = [
@@ -78,7 +77,7 @@ export function AppShell() {
     <div className="workspace-body">
       <header className="workspace-topbar">
         <div className="mobile-brand"><FileCheck2 size={20} /><span>formER</span></div>
-        <InteractiveHoverButton className="workspace-extension-link" to="/extension">Download extension</InteractiveHoverButton>
+        <Link className="app-button workspace-extension-link" to="/extension"><Download size={16} aria-hidden="true" />Download extension</Link>
         <button className="icon-button mobile-menu-button" aria-label="Open navigation" onClick={() => setMobile(true)}><Menu size={22} /></button>
       </header>
       <main ref={mainRef} id="workspace-main" className="workspace-main relative isolate" tabIndex={-1}>

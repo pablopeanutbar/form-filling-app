@@ -27,7 +27,7 @@ function Dashboard() {
         <span className={`section-icon ${item.ready ? 'is-ready' : ''}`}>{item.ready ? <Check size={18} /> : <Icon size={19} />}</span>
         <span className="readiness-label"><strong>{item.label}</strong><small>{item.detail}</small></span>
         {item.ready ? <Link className="readiness-ready" to={`/app/profile/${item.key}`} aria-label={`Review ${item.label}`}><span className="readiness-status is-ready">Added</span><ArrowRight size={16} /></Link>
-          : <InteractiveHoverButton compact to={`/app/profile/${item.key}`} aria-label={`Add ${item.label}`}>Add details</InteractiveHoverButton>}
+          : <InteractiveHoverButton to={`/app/profile/${item.key}`} aria-label={`Add ${item.label}`}>Add details</InteractiveHoverButton>}
       </div>; })}</div>
     </section>
     <section className="dashboard-bottom"><h2>A profile that grows with you.</h2></section>

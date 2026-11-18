@@ -20,7 +20,6 @@ export const InteractiveHoverButton = forwardRef(function InteractiveHoverButton
     }}
     className={cn('interactive-hover-button', compact && 'interactive-hover-button-compact', className)}>
     <span className="ihb-rest">
-      <span className="ihb-dot" aria-hidden="true" />
       <span className="ihb-label">{children}</span>
       <ArrowRight className="ihb-touch-arrow" size={16} aria-hidden="true" />
     </span>

@@ -124,6 +124,7 @@
 .readiness-list>a { display:flex; align-items:center; gap:13px; padding:18px 2px; border-top:1px solid #efeff2; color:#6e6e73; }
 .readiness-list>a:hover .readiness-label strong { color:#0071e3; }
 .readiness-row { display:flex; align-items:center; gap:13px; padding:18px 2px; border-top:1px solid #efeff2; min-width:0; }
+.readiness-row .interactive-hover-button { flex-shrink:0; }
 .readiness-ready { display:inline-flex; align-items:center; justify-content:flex-end; gap:12px; min-width:44px; min-height:44px; color:#6e6e73; }
 .readiness-ready:focus-visible { outline:2px solid #0071e3; outline-offset:3px; border-radius:8px; }
 .section-icon { display:inline-grid; place-items:center; width:39px; height:39px; border:1px solid #e9e9ee; border-radius:11px; background:#fafafc; color:#66666e; flex-shrink:0; }

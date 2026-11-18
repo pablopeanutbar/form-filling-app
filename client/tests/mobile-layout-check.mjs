@@ -79,6 +79,7 @@ try {
       })()`);
       console.log(JSON.stringify(result));
       if (result.overflow || result.clipped.length || result.small.length) failures++;
+
     }
   }
   process.exitCode = failures ? 1 : 0;

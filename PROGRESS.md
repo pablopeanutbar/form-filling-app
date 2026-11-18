@@ -1,5 +1,13 @@
 # formER — Development Progress Tracking
 
+## Button refinement
+
+- Removed the right-side hero phase/readiness text and reused the dashboard hover button for the hero CTA, preserving its signed-in destination and scroll-timeline wrapper.
+
+- The dashboard Add details actions now use the same standard button size and animation as Review your profile.
+
+- Restored the standard blue extension download controls. Removed the resting dot from the dashboard profile actions and eased their hover transitions over 500–550 ms.
+
 ## Mobile layout refinement
 
 - Added a reusable JSX InteractiveHoverButton adapted from the Magic UI / 21st.dev expanding-dot pattern, with router links, visible touch arrows, disabled states and reduced motion. Dashboard primary, incomplete-row and extension actions use the component.
