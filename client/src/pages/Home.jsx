@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Check, GraduationCap, UserRound, ContactRound, MapPin } from 'lucide-react';
 import { useProfile } from '../context/ProfileContext.jsx';
 import { profileReadiness } from '../utils/profile.js';
-import { PageHeader, ProfileGate, TextLink } from '../components/common/Page.jsx';
+import { PageHeader, ProfileGate } from '../components/common/Page.jsx';
 
 export function Home() {
   return <><PageHeader title="Make room for what’s next." /><ProfileGate><Dashboard /></ProfileGate></>;
@@ -27,8 +27,7 @@ function Dashboard() {
         <span className="readiness-label"><strong>{item.label}</strong><small>{item.detail}</small></span>
         <span className={`readiness-status ${item.ready ? 'is-ready' : ''}`}>{item.ready ? 'Added' : 'Add details'}</span><ArrowRight size={16} />
       </Link>; })}</div>
-      <p className="readiness-note">These four checkpoints cover common application details. They don’t measure eligibility or verify your information.</p>
     </section>
-    <section className="dashboard-bottom"><h2>A profile that grows with you.</h2><TextLink to="/app/profile">My Information</TextLink></section>
+    <section className="dashboard-bottom"><h2>A profile that grows with you.</h2></section>
   </div>;
 }

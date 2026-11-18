@@ -294,7 +294,7 @@ function handleReviewMessage(message, reviewDocumentId, sendResponse) {
         expiresAt: review.expiresAt
       };
       await chrome.storage.session.set({ [reviewKey(tab.id)]: review });
-      setTimeout(() => withConnectionLock(pruneReviews).catch(() => {}), Math.max(0, review.expiresAt - Date.now()));
+      setTimeout(() => withConnectionLock(pruneReviews).catch(() => {}), Math.max(0, review.expiresAt - Date.now()))?.unref?.();
       return review.view;
     }).finally(() => {
       if (!accountAction) operations.delete(tabId);

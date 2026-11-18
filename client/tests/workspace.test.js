@@ -7,7 +7,7 @@ import { JSDOM } from '../../server/node_modules/jsdom/lib/api.js';
 import { updateProfileSchema, educationSchema, updateEducationSchema } from '../../server/src/validators/profile.validator.js';
 
 const clientRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-let source, dom, window, harness, profile, writes, failure;
+let source, dom, window, harness, profile, writes, failure, sidebarMotion;
 const initialProfile = () => ({ personal: {}, contact: {}, addresses: { permanent: { city: 'Existing city' }, correspondence: {} }, education: [], professional: { skills: [], workExperience: [], profileLinks: {} } });
 before(async () => {
   const result = await build({ absWorkingDir: clientRoot, stdin: { contents: `
@@ -23,7 +23,9 @@ before(async () => {
     const root = createRoot(document.getElementById('root'));
     function Probe() { window.harness.auth = useAuth(); window.harness.profile = useProfile(); return null; }
     const router = createMemoryRouter([{ element:<AuthProvider><ProfileProvider><Probe/><UnsavedProvider><AppShell/></UnsavedProvider></ProfileProvider></AuthProvider>, children:[
-      {path:'/app',element:<Home/>}, {path:'/app/profile/:section?',element:<MyInformation/>}
+      {path:'/app',element:<Home/>}, {path:'/app/profile/:section?',element:<MyInformation/>},
+      {path:'/app/history',element:<h1>History</h1>}, {path:'/app/settings',element:<h1>Account Settings</h1>},
+      {path:'/app/report',element:<h1>Report</h1>}
     ]}], {initialEntries:['/app/profile/personal']});
     window.harness = { act, root, router, start:()=>root.render(<RouterProvider router={router}/>) };
   `, resolveDir: clientRoot, loader: 'jsx' }, bundle: true, write: false, platform: 'browser', format: 'iife', loader: { '.css': 'empty' }, define: { 'process.env.NODE_ENV': '"development"', 'import.meta': '{}' } });
@@ -42,6 +44,9 @@ beforeEach(async () => {
     constructor() { this.port1 = { onmessage: null }; this.port2 = { postMessage: () => setImmediate(() => this.port1.onmessage?.()) }; }
   };
   window.scrollTo = () => {};
+  sidebarMotion = Object.assign(new window.EventTarget(), { matches: false });
+  window.matchMedia = (query) => query.includes('(pointer: fine)')
+    ? sidebarMotion : Object.assign(new window.EventTarget(), { matches: false });
   window.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
   window.HTMLDialogElement.prototype.close = function () { this.open = false; };
   window.fetch = async (url, options = {}) => {
@@ -84,6 +89,70 @@ async function fill(name, value) {
   });
 }
 async function navigate(url) { await harness.act(async () => harness.router.navigate(url)); }
+test('Desktop and mobile links track direct routes and browser history', async () => {
+  const paths = ['/app', '/app/profile', '/app/history', '/app/settings', '/app/report'];
+  const sidebar = window.document.querySelector('.line-sidebar');
+  const active = () => sidebar.querySelector('[aria-current="page"]')?.getAttribute('href');
+  assert.equal(active(), '/app/profile');
+  assert.deepEqual([...sidebar.querySelectorAll('a')].map((link) => link.getAttribute('href')), paths);
+  for (const path of paths) {
+    const link = sidebar.querySelector(`[href="${path}"]`);
+    link.focus();
+    assert.equal(window.document.activeElement, link);
+    await harness.act(async () => link.click());
+    assert.equal(harness.router.state.location.pathname, path);
+    assert.equal(active(), path);
+  }
+  await navigate(-1);
+  assert.equal(active(), '/app/settings');
+  await navigate(1);
+  assert.equal(active(), '/app/report');
+  await click('Open navigation');
+  const mobile = window.document.querySelector('dialog nav');
+  assert.deepEqual([...mobile.querySelectorAll('a')].map((link) => link.getAttribute('href')), paths);
+  await harness.act(async () => mobile.querySelector('[href="/app/history"]').click());
+  assert.equal(active(), '/app/history');
+  assert.equal(window.document.querySelector('dialog'), null);
+});
+
+test('The proximity loop eases nearby rows, resets on exit and respects reduced motion', () => {
+  const list = window.document.querySelector('.line-sidebar');
+  const rows = [...list.children];
+  rows.forEach((row, i) => Object.defineProperties(row, { offsetTop: { value: i * 50 }, offsetHeight: { value: 45 } }));
+  const frames = new Map();
+  let id = 0;
+  window.requestAnimationFrame = (callback) => { frames.set(++id, callback); return id; };
+  window.cancelAnimationFrame = (frame) => { frames.delete(frame); };
+  const changeMotion = (matches) => {
+    sidebarMotion.matches = matches;
+    sidebarMotion.dispatchEvent(new window.Event('change'));
+  };
+  const move = () => list.dispatchEvent(new window.MouseEvent('pointermove', { bubbles: true, clientY: 72 }));
+  const effect = (index) => Number(rows[index].style.getPropertyValue('--effect'));
+  const advance = () => {
+    const start = window.performance.now();
+    for (let i = 1; i <= 40 && frames.size; i++) {
+      const [frame, callback] = frames.entries().next().value;
+      frames.delete(frame);
+      callback(start + i * 50);
+    }
+  };
+  move();
+  assert.equal(frames.size, 0);
+  changeMotion(true);
+  move();
+  advance();
+  assert.ok(effect(1) > effect(0) && effect(0) > effect(4));
+  list.dispatchEvent(new window.MouseEvent('pointerout', { bubbles: true }));
+  advance();
+  assert.equal(effect(1), 0);
+  assert.equal(frames.size, 0);
+  move();
+  changeMotion(false);
+  assert.equal(frames.size, 0);
+  assert.equal(rows[1].style.getPropertyValue('--effect'), '');
+  assert.equal(rows[1].querySelector('a').getAttribute('aria-current'), 'page');
+});
 test('Section saves persist editable values and preserve other sections', async () => {
   await fill('fullName', 'Synthetic Applicant');
   await click('Save changes');

@@ -6,6 +6,7 @@ import { useUnsaved } from '../../context/UnsavedContext.jsx';
 import { useSmoothScrolling } from '../../hooks/useSmoothScrolling.js';
 import { Dialog } from '../common/Dialog.jsx';
 import { FloatingPathsBackground } from '../ui/floating-paths';
+import LineSidebar from '../ui/LineSidebar.jsx';
 import '../../styles/workspace.css';
 
 const navigation = [
@@ -62,7 +63,7 @@ export function AppShell() {
     <a className="workspace-skip" href="#workspace-main">Skip to content</a>
     <aside className="workspace-sidebar">
       <Link className="workspace-brand" to="/app"><span className="brand-symbol"><FileCheck2 size={22} /></span>formER</Link>
-      <p className="sidebar-caption">Your workspace</p>{nav}
+      <LineSidebar items={navigation} />
       <div className="sidebar-bottom">
         <div className="account-wrap" ref={accountRef}>
           {account && <div className="account-popover"><p>Signed in as<strong>{user?.email}</strong></p>
@@ -86,7 +87,6 @@ export function AppShell() {
       </main>
       <footer className="workspace-footer">
         <button className="workspace-back-to-top" type="button" onClick={backToTop}>Back to top <ArrowUp size={14} aria-hidden="true" /></button>
-        <span>formER</span>
       </footer>
     </div>
     {mobile && <Dialog title="Your workspace" onClose={() => setMobile(false)}>{nav}

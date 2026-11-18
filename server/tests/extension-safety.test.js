@@ -42,9 +42,11 @@ test('Missing marks are not replaced with percentages; duplicate records do not 
 
 test('Destination numeric validation blocks text, infinities, bounds, and step violations', () => {
   assert.equal(decide({ label: 'Applicant name', type: 'number' }).value, null);
-  for (const constraints of [{ max: '400' }, { min: '430' }, { step: '13' }, { pattern: '(a+)+$' }]) {
+  for (const constraints of [{ max: '400' }, { min: '430' }, { step: '13' }]) {
     assert.equal(decide({ label: 'Class 10 marks obtained', type: 'number', constraints }).status, 'needs_review');
   }
+  // Pattern validation applies to text-based inputs per HTML specification, flagging unsupported custom patterns
+  assert.equal(decide({ label: 'Class 10 marks obtained', type: 'text', constraints: { pattern: '(a+)+$' } }).status, 'needs_review');
   assert.equal(decide({ label: 'Class 10 marks obtained', type: 'number' }, { ...profile, education: [{ ...profile.education[0], marksObtained: Infinity }] }).value, null);
 });
 
@@ -66,8 +68,14 @@ test('Backend independently rejects sensitive and unsupported fields', () => {
 
 test('High semantic similarity still requires review, and incompatible semantic values are withheld', () => {
   const candidate = { canonicalKey: 'personal.fullName', method: 'semantic_embedding', score: .99 };
-  assert.equal(validateCandidate({ label: 'Name', type: 'text' }, candidate, profile).status, 'needs_review');
-  assert.equal(validateCandidate({ label: 'Name', type: 'number' }, candidate, profile).value, null);
+  // Intentional safe abstention on ambiguous contextless Name (identity cannot determine whose name)
+  assert.equal(validateCandidate({ label: 'Name', type: 'text' }, candidate, profile).status, 'unmatched');
+  // With sufficient context, high semantic similarity requires review and supplies profile value
+  const contextualized = validateCandidate({ label: 'Name', section: 'Personal details', type: 'text' }, candidate, profile);
+  assert.equal(contextualized.status, 'needs_review');
+  assert.equal(contextualized.value, 'Test Applicant');
+  // Incompatible destination types withhold values
+  assert.equal(validateCandidate({ label: 'Applicant name', type: 'number' }, candidate, profile).value, null);
 });
 
 test('Both extraction implementations preserve constraints and choices without entered values', async () => {

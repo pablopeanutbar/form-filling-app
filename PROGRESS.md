@@ -1,5 +1,27 @@
 # formER — Development Progress Tracking
 
+## Production Deployment for Gemini Contextual Matching
+
+- Removed development-only restrictions (`NODE_ENV === 'development'`, `GEMINI_PRIVATE_SYNTHETIC_DEV === 'true'`, localhost IP checks, and `127.0.0.1` loopback binding) that blocked Gemini contextual matching from running on hosted Render backend deployments.
+- Standardized the activation flag on `GEMINI_MATCHING_ENABLED` (`true` enables fallback in both development and production when `GEMINI_API_KEY` is present; `false` disables it). Aliased `privateGeminiEnabled` to `isGeminiEnabled` for backward compatibility.
+- Bound server to standard default host interfaces (`0.0.0.0`) instead of hardcoded `127.0.0.1`, permitting inbound Render routing and platform health checks.
+- Preserved all safety layers: zero profile values transmitted to external APIs, 24-word matching vocabulary sanitization, strict Zod response parsing, rate limits, destination validation, and graceful fallback on 429 quota or network errors.
+- Verified test coverage with 9 passing tests across `gemini-matching.test.js` and `contextual-matching.test.js`, and 31 passing tests across the extension and matching test suites.
+
+## Workspace sidebar motion
+
+- Removed the sidebar caption, dashboard checkpoint note, and lower My Information link. Brought the navigation closer to the logo.
+
+- Adapted the React Bits LineSidebar proximity animation to the desktop navigation. React Router controls the active link and the animation runs only with a fine pointer and no reduced-motion preference. The mobile drawer uses the existing links.
+- Focused tests passed for all five routes, history navigation, mobile links, proximity falloff, and reduced motion. The live browser confirmed keyboard navigation, equal row heights and no overflow at 1024 px, and drawer navigation at 390 px.
+
+## My Information save feedback
+
+- Added a Same as permanent address checkbox to Correspondence address. It copies the saved address into the draft and uses the existing Save changes action. Unchecking before saving restores the previous draft. Removed the profile sidebar tip, idle save message, and workspace footer wordmark.
+
+- My Information shows a compact success card after confirmed personal, contact, address, qualification and professional saves. The React Bits Folder plays its built-in intro, the message is announced through a live status, and the card unmounts after 2.2 seconds. Reduced-motion users receive the static notice.
+- Verified the production frontend build and focused UI behavior for pending and failed saves, repeated success, dismissal, timer cleanup, and reduced motion in JSDOM.
+
 ## 31-field contextual form audit
 
 - Ran the desktop's original admissions HTML through extraction, request validation, a synthetic Mongoose profile, the matcher, popup selection and DOM writing in JSDOM. The complete fixture improved from 19 to 25 correct fills; the incomplete fixture improved from 6 to 8. Both final runs had zero incorrect fills, with 6 and 23 correct abstentions respectively. No fields needed MiniLM or Gemini in either final run.

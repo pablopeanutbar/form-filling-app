@@ -25,9 +25,9 @@ const envSchema = z.object({
   ALLOWED_ORIGINS: z.string().default('http://localhost:5173'),
   EXTENSION_IDS: extensionIdList,
   GEMINI_API_KEY: z.string().default(''),
-  GEMINI_PRIVATE_SYNTHETIC_DEV: z.enum(['true', 'false']).default('false'),
+  GEMINI_PRIVATE_SYNTHETIC_DEV: z.string().optional().default('false'),
   GEMINI_MODEL: z.string().trim().min(1).default('gemini-3.5-flash-lite'),
-  GEMINI_MATCHING_ENABLED: z.enum(['true', 'false']).default('false').transform((value) => value === 'true'),
+  GEMINI_MATCHING_ENABLED: z.union([z.boolean(), z.enum(['true', 'false'])]).default('false').transform((value) => String(value) === 'true'),
   EXTENSION_DEV_IDS: extensionIdList
 });
 

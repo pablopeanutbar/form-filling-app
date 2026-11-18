@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildCloudBatch, createGeminiFallback, sanitizeMetadata } from '../src/services/matching/geminiMatcher.js';
+import { buildCloudBatch, createGeminiFallback, sanitizeMetadata, isGeminiEnabled } from '../src/services/matching/geminiMatcher.js';
 import { validateCandidate } from '../src/services/matching/validationEngine.js';
 
 const profile = {
@@ -77,4 +77,20 @@ test('mock Gemini returns review only, revalidates cached values, and preserves 
   assert.deepEqual(rejected, baseline());
   const disabled = createGeminiFallback({ settings: { enabled: false }, generate: () => assert.fail() });
   await disabled(fields, profile, rejected);
+});
+
+test('Gemini is enabled in production when configured, disabled when off, and handles API errors gracefully', async () => {
+  assert.equal(isGeminiEnabled({ NODE_ENV: 'production', GEMINI_MATCHING_ENABLED: 'true', GEMINI_API_KEY: 'test-key' }), true);
+  assert.equal(isGeminiEnabled({ NODE_ENV: 'production', GEMINI_MATCHING_ENABLED: true, GEMINI_API_KEY: 'test-key' }), true);
+  assert.equal(isGeminiEnabled({ NODE_ENV: 'production', GEMINI_MATCHING_ENABLED: 'false', GEMINI_API_KEY: 'test-key' }), false);
+  assert.equal(isGeminiEnabled({ NODE_ENV: 'production', GEMINI_MATCHING_ENABLED: 'true', GEMINI_API_KEY: '' }), false);
+  assert.equal(isGeminiEnabled({ NODE_ENV: 'production', GEMINI_MATCHING_ENABLED: 'true' }), false);
+
+  const networkErrorFallback = createGeminiFallback({
+    settings: { enabled: true, key: 'mock-key', model: 'mock-model' },
+    generate: async () => { throw new Error('Network error / 500 internal server error'); }
+  });
+  const result = baseline();
+  await networkErrorFallback(fields, profile, result);
+  assert.deepEqual(result, baseline());
 });

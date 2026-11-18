@@ -5,7 +5,7 @@ import { educationFields, friendlyError } from '../../utils/profile.js';
 import { EditForm } from './EditForm.jsx';
 import { Dialog } from '../common/Dialog.jsx';
 
-export function Education() {
+export function Education({ onSaved }) {
   const { profile, saveEducation, deleteEducation } = useProfile();
   const [editing, setEditing] = useState(null);
   const [removing, setRemoving] = useState(null);
@@ -23,7 +23,7 @@ export function Education() {
     title={editing.id ? 'Edit qualification' : 'Add a qualification'}
     description="Give each qualification its own record, even when you have more than one at the same level."
     splitAt={10} onClose={() => setEditing(null)}
-    onSave={(body) => saveEducation(body, editing.id)} onSaved={() => { setEditing(null); setNotice('Qualification saved.'); }} />;
+    onSave={(body) => saveEducation(body, editing.id)} onSaved={() => { setEditing(null); setNotice(''); onSaved?.(); }} />;
   return <section className="app-panel education-panel">
     <div className="editor-heading"><h2>Educational qualifications</h2><p>Your school, college, and other qualifications, each with their own details.</p></div>
     {notice && <p className="save-notice" role="status"><Check size={16} />{notice}</p>}

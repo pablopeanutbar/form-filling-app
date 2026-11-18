@@ -3,7 +3,7 @@ import { rankCandidatesBatch } from './semanticMatcher.js';
 import { validateCandidate, isUnsupportedField } from './validationEngine.js';
 import { getFieldByKey } from './fieldRegistry.js';
 import { matchingDiagnostic } from './diagnostics.js';
-import { applyGeminiFallback, privateGeminiEnabled } from './geminiMatcher.js';
+import { applyGeminiFallback, isGeminiEnabled } from './geminiMatcher.js';
 import { executeAnswerPlan, understandDerivedField } from './answerPlanner.js';
 
 /**
@@ -38,7 +38,11 @@ export const matchFormFields = async (fields, profile, options = {}) => {
     if (plan && trace) trace[index].derivation = plan.operation || 'unresolved';
     return executeAnswerPlan(field, profile, plan);
   };
-  const cloudEnabled = options.localDevelopmentRequest === true && privateGeminiEnabled();
+  const cloudEnabled = typeof options.cloudEnabled === 'boolean'
+    ? options.cloudEnabled
+    : typeof options.localDevelopmentRequest === 'boolean'
+      ? options.localDevelopmentRequest && isGeminiEnabled()
+      : isGeminiEnabled();
 
   // Stage 1: Unsupported check & Stage 2: Deterministic matching
   for (let i = 0; i < fields.length; i++) {

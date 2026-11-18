@@ -9,7 +9,7 @@ import { Dialog } from '../common/Dialog.jsx';
 
 const skillFields = [{ name: 'skills', label: 'Skills', list: true, maxItems: 50, itemLength: 60, wide: true, hint: 'Separate skills with commas. Add up to 50.' }];
 const toDraft = (data = {}) => ({ skills: (data.skills || []).join(', '), links: draftFrom(linkFields, data.profileLinks), work: (data.workExperience || []).map((item) => ({ ...draftFrom(workFields, item), isCurrent: Boolean(item.isCurrent) })) });
-export function Professional() {
+export function Professional({ onSaved }) {
   const { profile, save } = useProfile();
   const [baseline, setBaseline] = useState(() => toDraft(profile.professional));
   const [draft, setDraft] = useState(baseline);
@@ -36,7 +36,7 @@ export function Professional() {
     const body = { skills: payloadFrom(skillFields, draft).skills, profileLinks: payloadFrom(linkFields, draft.links),
       workExperience: draft.work.map((item) => ({ ...payloadFrom(workFields, item), isCurrent: item.isCurrent, endDate: item.isCurrent ? null : item.endDate || null })) };
     setBusy(true); setError('');
-    try { const result = await save({ professional: body }); const next = toDraft(result.professional); setBaseline(next); setDraft(next); setSaved(true); }
+    try { const result = await save({ professional: body }); const next = toDraft(result.professional); setBaseline(next); setDraft(next); setSaved(true); onSaved?.(); }
     catch (err) { setError(friendlyError(err)); }
     finally { setBusy(false); }
   };

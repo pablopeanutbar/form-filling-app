@@ -89,15 +89,19 @@ let day = '';
 let requests = 0;
 const cache = new Map();
 
-export function privateGeminiEnabled(environment = process.env) {
-  return environment.NODE_ENV === 'development' && environment.GEMINI_MATCHING_ENABLED === 'true'
-    && environment.GEMINI_PRIVATE_SYNTHETIC_DEV === 'true';
+export function isGeminiEnabled(environment = process.env) {
+  const enabled = environment.GEMINI_MATCHING_ENABLED === true || environment.GEMINI_MATCHING_ENABLED === 'true';
+  const key = environment.GEMINI_API_KEY;
+  const hasKey = typeof key === 'string' && key.trim().length > 0;
+  return enabled && hasKey;
 }
+
+export const privateGeminiEnabled = isGeminiEnabled;
 
 export function createGeminiFallback({ generate, settings, now = Date.now, onRequest } = {}) {
   return async (fields, profile, decisions, plans, countRequest) => {
     const config = settings || {
-      enabled: privateGeminiEnabled(),
+      enabled: isGeminiEnabled(),
       key: process.env.GEMINI_API_KEY,
       model: process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite'
     };
