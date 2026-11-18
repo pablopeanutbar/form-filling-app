@@ -1,5 +1,14 @@
 # formER — Development Progress Tracking
 
+## Extension Packaging & Website Download
+
+- Resolved all packaging script errors: restored the authoritative Lucide ISC license (`extension/icons/LICENSE-lucide.txt`), added `icons/icon32.png` to both `manifest.json` (`action.default_icon` and `icons`) and `package-files.json`, ensuring all 17 runtime files exist and pass SHA256 integrity verification.
+- Built the production release extension archive (`formER-release.zip`, 36.6 KB) with `Configuration: release`, `ApiUrl: https://former-1x4i.onrender.com`, and `WebsiteUrl: https://getformer.vercel.app`. Preserved the extension public key and stable ID (`egddjhnhnbgdhgiepnfmnnhfagbaambn`), while restricting host permissions strictly to `https://former-1x4i.onrender.com/*`. Excluded all secrets, tests, node_modules, and `.env` files.
+- Copied the verified release archive to `client/public/downloads/former-extension.zip` (and verified it bundles into `client/dist/downloads/former-extension.zip`).
+- Connected the website download button on `/extension` to download `/downloads/former-extension.zip` using the blue-and-black `AntiMetalButton` (`accentFrom="#0071E3"`, `accentTo="#005bb5"`, `dotColor="#ffffff"`, black gradient body) with active hover animation.
+- Added explicit 6-step desktop Chrome Developer mode installation instructions and desktop Chrome platform requirements near the download section.
+- Passed client production build (`vite build`), 23 client unit tests, 24 extension backend tests, and verified ZIP extraction integrity.
+
 ## Button refinement
 
 - Removed the right-side hero phase/readiness text and reused the dashboard hover button for the hero CTA, preserving its signed-in destination and scroll-timeline wrapper.

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, ArrowUpRight, ChevronDown, Chrome, Copy, Download, FileCheck2, Globe, Hand, Info, ListFilter, ScanLine, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { FloatingPathsBackground } from '../components/ui/floating-paths';
+import { AntiMetalButton } from '../components/ui/anti-metal-button.tsx';
 import '../styles/extension-page.css';
 
 function officialStoreUrl(value) {
@@ -15,44 +16,30 @@ function officialStoreUrl(value) {
 }
 const storeUrl = officialStoreUrl(import.meta.env.VITE_CHROME_WEB_STORE_URL);
 
-function DevelopmentDownload() {
-  const [attempt, setAttempt] = useState(0);
-  const [state, setState] = useState({ checking: true, available: false });
-  useEffect(() => {
-    const controller = new AbortController();
-    let active = true;
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    setState({ checking: true, available: false });
-    async function check() {
-      try {
-        const response = await fetch('/__former-extension/status', { signal: controller.signal, cache: 'no-store' });
-        if (!response.ok) throw new Error('Package unavailable');
-        const result = await response.json();
-        const available = result.available === true && typeof result.url === 'string'
-          && /^\/[a-zA-Z0-9_/-]+\.zip$/.test(result.url);
-        if (active) setState({ ...result, checking: false, available });
-      } catch { if (active) setState({ checking: false, available: false }); }
-      finally { clearTimeout(timeout); }
-    }
-    check();
-    return () => { active = false; controller.abort(); clearTimeout(timeout); };
-  }, [attempt]);
-
-  return <section className="ext-development" aria-labelledby="development-title">
-    <div><span className="ext-kicker">For development & testing</span><h3 id="development-title">Try the development version.</h3>
-      <p>This copy is installed by hand in Chrome. It isn’t a Chrome Web Store release.</p></div>
-    <div className="ext-download-action">
-      <div role="status" aria-live="polite">
-        {state.checking ? <p>Checking download availability…</p> : state.available
-          ? <p>Version {state.version} · ZIP package{Number.isFinite(state.bytes) ? ` · ${Math.ceil(state.bytes / 1024)} KB` : ''}</p>
-          : <p>The development package isn’t available right now. A current package needs to be prepared before you can download it.</p>}
+function ExtensionDownload() {
+  return (
+    <section className="ext-development" aria-labelledby="development-title">
+      <div>
+        <span className="ext-kicker">Ready to install</span>
+        <h3 id="development-title">Get the formER extension.</h3>
+        <p>This package installs directly in desktop Google Chrome on Windows, macOS, or Linux via Developer mode.</p>
       </div>
-      {state.available && !state.checking
-        ? <a className="ext-button" href={state.url} download="formER-development.zip"><Download size={17} aria-hidden="true" />Download Extension</a>
-        : <button className="ext-button ext-button-secondary" disabled={state.checking} onClick={() => setAttempt((value) => value + 1)}>{state.checking ? 'Checking…' : 'Check availability again'}</button>}
-      <a className="ext-text-link" href="#installation">Follow the installation guide <ArrowRight size={15} aria-hidden="true" /></a>
-    </div>
-  </section>;
+      <div className="ext-download-action">
+        <div role="status" aria-live="polite">
+          <p>Version 0.2.0 · Production ZIP package</p>
+        </div>
+        <AntiMetalButton
+          href="/downloads/former-extension.zip"
+          download="former-extension.zip"
+          label="Download extension"
+          accentFrom="#0071E3"
+          accentTo="#005bb5"
+          dotColor="#ffffff"
+        />
+        <a className="ext-text-link" href="#installation">Follow the installation guide <ArrowRight size={15} aria-hidden="true" /></a>
+      </div>
+    </section>
+  );
 }
 
 function SidePanelPreview() {
@@ -82,18 +69,18 @@ function InstallationGuide() {
     catch { setCopyStatus('Select chrome://extensions below and copy it into a new Chrome tab.'); }
   };
   const steps = [
-    ['Download the ZIP', 'Use Download Extension above when the development package is available.'],
-    ['Extract it to a folder', 'Right-click the downloaded ZIP and choose Extract All (or your computer’s extract option). Keep the extracted folder somewhere you won’t move or delete it.'],
-    ['Open Chrome’s extensions page', <><p>Paste this address into Chrome’s address bar:</p><div className="ext-copy-row"><code>chrome://extensions</code><button onClick={copyAddress} aria-label="Copy Chrome extensions address"><Copy size={16} aria-hidden="true" />Copy</button></div><p className="ext-copy-status" role="status">{copyStatus}</p></>],
-    ['Enable Developer Mode', 'Turn on Developer Mode in the upper-right corner of the extensions page.'],
-    ['Select Load unpacked', 'A folder picker will open.'],
-    ['Choose the extracted folder', <>Select the folder containing <code>manifest.json</code>. Choose that folder, not the ZIP file. If you see another folder inside, open it until you find <code>manifest.json</code>.</>],
+    ['Download the ZIP', 'Download former-extension.zip using the Download extension button above.'],
+    ['Extract the ZIP', 'Right-click the downloaded ZIP and choose Extract All (or your computer’s archive utility). Keep the extracted folder somewhere permanent.'],
+    ['Open chrome://extensions', <><p>Paste this address into desktop Chrome’s address bar:</p><div className="ext-copy-row"><code>chrome://extensions</code><button onClick={copyAddress} aria-label="Copy Chrome extensions address"><Copy size={16} aria-hidden="true" />Copy</button></div><p className="ext-copy-status" role="status">{copyStatus}</p></>],
+    ['Enable Developer mode', 'Turn on Developer mode in the upper-right corner of the extensions page.'],
+    ['Click Load unpacked', 'Click the Load unpacked button in the upper-left toolbar of the extensions page.'],
+    ['Select the extracted folder', <>Select the extracted extension folder containing <code>manifest.json</code>. Choose that folder, not the original ZIP file.</>],
     ['Pin formER to your toolbar', 'Select the puzzle-piece Extensions icon in Chrome’s toolbar, then select the pin next to formER. Open a webpage with a form, click formER, and choose Detect fields.']
   ];
   return <section className="ext-guide" id="installation" aria-labelledby="installation-title">
     <div className="ext-section-intro"><span className="ext-kicker">One small setup</span><h2 id="installation-title">From download<br />to your toolbar.</h2>
-      <p>These steps are for development and testing on desktop Chrome. The eventual public release will install through the Chrome Web Store.</p>
-      <div className="ext-callout"><Info size={19} aria-hidden="true" /><p>Extract first. Chrome’s <strong>Load unpacked</strong> option accepts a folder, not a ZIP.</p></div>
+      <p>These steps are for desktop Google Chrome (Windows, macOS, or Linux). Requires desktop Chrome.</p>
+      <div className="ext-callout"><Info size={19} aria-hidden="true" /><p>Extract first. Chrome’s <strong>Load unpacked</strong> option accepts an unzipped folder, not a ZIP archive.</p></div>
     </div>
     <ol className="ext-steps">{steps.map(([title, description], index) => <li key={title}>
       <span className="ext-step-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span><div><h3>{title}</h3><div className="ext-step-description">{description}</div></div>
@@ -133,11 +120,11 @@ export function Extension() {
       <section className="ext-distribution" id="get-extension" aria-labelledby="download-title">
         <div className="ext-store"><div className="ext-store-heading"><Chrome size={30} strokeWidth={1.5} aria-hidden="true" /><span className="ext-kicker">Installation</span></div>
           <h2 id="download-title">Give formER a place<br />in your browser.</h2>
-          <p>{storeUrl ? 'Install from the official Chrome Web Store listing. Chrome will guide you through the steps and show the requested permissions.' : 'The Chrome Web Store version isn’t available yet. There’s no public installation link at the moment.'}</p>
+          <p>{storeUrl ? 'Install from the official Chrome Web Store listing. Chrome will guide you through the steps and show the requested permissions.' : 'The Chrome Web Store version is currently pending review. You can install the verified extension package directly below in desktop Chrome.'}</p>
           {storeUrl ? <a className="ext-button" href={storeUrl} target="_blank" rel="noopener noreferrer">Add to Chrome<ArrowUpRight size={17} aria-hidden="true" /><span className="sr-only"> (opens in a new tab)</span></a>
-            : <span className="ext-unavailable"><Info size={15} aria-hidden="true" />Not on the Chrome Web Store yet</span>}
+            : <span className="ext-unavailable"><Info size={15} aria-hidden="true" />Chrome Web Store listing pending review</span>}
         </div>
-        {import.meta.env.DEV ? <DevelopmentDownload /> : <div className="ext-public-note"><Info size={18} aria-hidden="true" /><p>Development ZIP downloads are available only on the local development website. They aren’t distributed from this public page.</p></div>}
+        <ExtensionDownload />
       </section>
 
       <InstallationGuide />
