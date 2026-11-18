@@ -255,39 +255,39 @@ export const LandingPage = () => {
   const processSteps = [
     {
       step: '01',
-      title: 'Save Info Once',
-      body: 'Enter your personal details, contact coordinates, and qualifications in your private profile.',
-      tag: 'One-time setup'
+      title: 'Save your details',
+      body: 'Add your name, contact details, address, and education to your profile.',
+      tag: 'Ready to reuse'
     },
     {
       step: '02',
-      title: 'Navigate Any Form',
-      body: 'Open job portals, college applications, or registration sites directly in your browser.',
-      tag: 'Supported pages'
+      title: 'Open a form',
+      body: 'Visit the job application, college application, or sign-up form you want to complete.',
+      tag: 'In your browser'
     },
     {
       step: '03',
-      title: 'Detect Questions',
-      body: 'The formER extension inspects labels, fieldsets, and options without reading entered secrets.',
-      tag: 'Zero-data scan'
+      title: 'Check the form',
+      body: 'Open the formER extension to find the fields it can help you fill.',
+      tag: 'Start with a click'
     },
     {
       step: '04',
-      title: 'Semantic Matching',
-      body: 'Our hybrid deterministic and local ML engine maps each question to your canonical record.',
-      tag: 'MiniLM embeddings'
+      title: 'Find your answers',
+      body: 'formER looks for the right saved detail for each question.',
+      tag: 'From your profile'
     },
     {
       step: '05',
-      title: 'Review Suggestions',
-      body: 'High-confidence matches are shown clearly; uncertain or ambiguous questions ask for your choice.',
-      tag: 'Explicit review'
+      title: 'Choose what to fill',
+      body: 'Check the suggested answers. Edit them or leave out anything you don’t want to use.',
+      tag: 'Your choice'
     },
     {
       step: '06',
-      title: 'Fill With Control',
-      body: 'Approved values populate into the inputs. You review the complete page and submit it yourself.',
-      tag: 'User submit only'
+      title: 'Fill and check',
+      body: 'Fill the answers you selected, check the form, and submit it when you’re ready.',
+      tag: 'You submit the form'
     }
   ];
 
@@ -1151,7 +1151,7 @@ export const LandingPage = () => {
           <div className="ac-strip-stage">
             <div className="ac-strip-head">
               <h2>How formER works</h2>
-              <p>Six straightforward steps between having your details and completing an online form.</p>
+              <p>Save your details, choose your answers, and fill your next form with less typing.</p>
               <div className="ac-strip-bar" aria-hidden="true">
                 <i />
               </div>

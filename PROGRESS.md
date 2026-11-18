@@ -1,5 +1,7 @@
 # formER — Development Progress Tracking
 
+- Rewrote the landing page's six How It Works cards in everyday language, replacing matching-engine terminology with clear user actions.
+
 ## Extension Packaging & Website Download
 
 - Resolved all packaging script errors: restored the authoritative Lucide ISC license (`extension/icons/LICENSE-lucide.txt`), added `icons/icon32.png` to both `manifest.json` (`action.default_icon` and `icons`) and `package-files.json`, ensuring all 17 runtime files exist and pass SHA256 integrity verification.
@@ -10,6 +12,10 @@
 - Passed client production build (`vite build`), 23 client unit tests, 24 extension backend tests, and verified ZIP extraction integrity.
 
 ## Button refinement
+
+- Increased dashboard section labels to 15 px and slowed dashboard button color fills to 950 ms, with coordinated 800 ms text transitions.
+
+- Simplified the dashboard intro to the requested headline and description, enlarged and darkened the welcome message, and moved the card up by removing its outer heading. Saved sections now use Edit buttons with the same hover treatment as Add details. The phone download control has narrower padding and a smaller label while keeping a 44 px touch target.
 
 - Removed the right-side hero phase/readiness text and reused the dashboard hover button for the hero CTA, preserving its signed-in destination and scroll-timeline wrapper.
 

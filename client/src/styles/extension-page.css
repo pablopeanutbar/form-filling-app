@@ -20,9 +20,11 @@
 .ext-header { display: flex; align-items: center; justify-content: space-between; padding: 26px 0; border-bottom: 1px solid var(--color-border); gap: 20px; }
 .ext-brand { display: inline-flex; align-items: center; gap: 10px; color: var(--color-text); font-size: 26px; font-weight: 650; letter-spacing: -1.4px; }
 .ext-brand svg { color: var(--color-primary); }
-.ext-header nav { display: flex; align-items: center; gap: 28px; font-size: 13px; }
+.ext-header nav { display: flex; align-items: center; gap: 28px; font-size: 15px; font-weight: 600; }
 .ext-home { color: var(--color-text-muted); }
 .ext-nav-action { display: inline-flex; align-items: center; gap: 8px; color: var(--color-primary-hover); min-height: 44px; }
+.ext-header nav a { color: #1d1d1f; min-height:44px; display:inline-flex; align-items:center; }
+.ext-header nav a:hover { color: #0071e3; }
 .ext-hero { display: grid; grid-template-columns: 1.15fr 1fr; align-items: center; gap: 60px; padding: 76px 0 70px; }
 .ext-kicker { display: flex; align-items: center; gap: 8px; color: var(--color-text-muted); font-size: 12px; font-weight: 500; margin-bottom: 18px; }
 .ext-hero h1 { font-size: clamp(40px, 4.8vw, 62px); font-weight: 600; letter-spacing: -2.9px; line-height: 1.06; }
@@ -125,7 +127,7 @@
 @media (max-width: 900px) { .ext-hero { gap: 32px; } .ext-hero h1 { letter-spacing: -2px; } .ext-guide, .ext-help, .ext-privacy { gap: 36px; } .ext-capabilities { gap: 24px; } }
 @media (max-width: 700px) {
   .ext-header, .ext-footer, .extension-page main { width: calc(100% - 40px); }
-  .ext-header { padding: 18px 0; } .ext-header nav { gap: 16px; font-size: 12px; }
+  .ext-header { padding: 18px 0; } .ext-header nav { gap: 16px; font-size: 14px; }
   .ext-home { display: none; }
   .ext-hero { grid-template-columns: 1fr; gap: 36px; padding: 44px 0; }
   .ext-hero-copy > p { font-size: 15px; } .ext-hero h1 { font-size: clamp(40px, 9vw, 54px); }

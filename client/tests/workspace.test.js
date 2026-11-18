@@ -170,7 +170,7 @@ test('Navigation and browser Back prompt for unsaved edits; cancel retains them'
   assert.equal(window.document.querySelector('[name="contactEmail"]').value, 'synthetic@example.com');
   await navigate('/app');
   await click('Discard changes');
-  assert.match(text(), /Make room for what’s next/);
+  assert.match(text(), /Your details all at one place/);
   assert.equal(writes.length, 0);
 });
 test('Save failures retain edits and permit retry without false success', async () => {
